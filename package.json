@@ -1,0 +1,25 @@
+{
+  "name": "mon-celebra",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mon Celebra - Chaque moment merite d'etre celebre.",
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "npm run dev --workspace backend",
+    "dev:frontend": "npm run dev --workspace frontend",
+    "start": "npm run start --workspace backend",
+    "build": "npm run build --workspace frontend",
+    "seed": "npm run seed --workspace backend"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  },
+  "allowScripts": {
+    "sharp@0.33.5": true,
+    "esbuild@0.25.12": true
+  }
+}
