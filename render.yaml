@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: mon-celebra-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install --omit=dev
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: REFRESH_TOKEN_SECRET
+        sync: false
+      - key: CLIENT_URL
+        value: https://mon-celebra.vercel.app
+      - key: STORAGE_DRIVER
+        value: cloudinary
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+      - key: PUBLIC_BASE_URL
+        sync: false

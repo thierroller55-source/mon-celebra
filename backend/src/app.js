@@ -35,9 +35,18 @@ app.use(
   }),
 );
 
+// CLIENT_URL accepte une ou plusieurs origines separees par des virgules,
+// ce qui permet d'autoriser a la fois le frontend local et celui deploye.
+const allowedOrigins = env.CLIENT_URL.split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
+    origin(origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Origine non autorisee par CORS.'));
+    },
     credentials: true,
   }),
 );
