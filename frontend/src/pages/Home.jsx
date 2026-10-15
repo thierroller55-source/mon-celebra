@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, QrCode, Heart, Users } from 'lucide-react';
-import { MVP_CATEGORIES, FUTURE_CATEGORIES } from '../utils/constants.js';
+import { categoryService } from '../services/category.service.js';
 
 const features = [
   {
@@ -26,6 +27,19 @@ const features = [
 ];
 
 export default function Home() {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+    categoryService
+      .list()
+      .then((list) => active && setCategories(list))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
+
   return (
     <div>
       <section className="mx-auto w-full max-w-6xl px-4 py-14 text-center sm:py-20">
@@ -33,7 +47,7 @@ export default function Home() {
           Invitations numeriques interactives
         </p>
         <h1 className="mx-auto max-w-3xl text-3xl font-bold leading-tight sm:text-5xl">
-          Chaque moment merite d'etre celebre.
+          Chaque moment merite d&apos;etre celebre.
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-base text-celebra-dark/70 sm:text-lg">
           Creez une page web unique pour votre mariage, anniversaire ou bapteme.
@@ -41,43 +55,42 @@ export default function Home() {
           memorable.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-          <Link to="/inscription" className="btn-primary px-6 py-3 text-base">
+          <Link to="/dashboard/creer" className="btn-primary px-6 py-3 text-base">
             Creer mon evenement
           </Link>
           <Link to="/connexion" className="btn-outline px-6 py-3 text-base">
-            J'ai deja un compte
+            Espace administrateur
           </Link>
         </div>
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-4 pb-14">
         <h2 className="mb-6 text-center text-2xl font-bold">Choisissez votre evenement</h2>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {MVP_CATEGORIES.map((category) => (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {categories.map((category) => (
             <div
               key={category.slug}
               className="card flex flex-col items-center gap-3 p-6 text-center"
             >
               <span className="text-4xl" aria-hidden="true">
-                {category.emoji}
+                {category.emoji || '\u{1F38A}'}
               </span>
               <h3 className="text-lg font-semibold">{category.name}</h3>
-              <Link to="/inscription" className="btn-outline mt-2 w-full">
+              <Link
+                to={`/dashboard/creer/${category.slug}`}
+                className="btn-outline mt-2 w-full"
+              >
                 Commencer
               </Link>
             </div>
           ))}
         </div>
-        <p className="mt-6 text-center text-sm text-celebra-dark/60">
-          Et bientot :{' '}
-          {FUTURE_CATEGORIES.map((c) => c.name).join(' · ')}
-        </p>
       </section>
 
       <section className="border-t border-celebra-dark/10 bg-white py-14">
         <div className="mx-auto w-full max-w-6xl px-4">
           <h2 className="mb-8 text-center text-2xl font-bold">
-            Tout ce qu'il faut pour reussir votre evenement
+            Tout ce qu&apos;il faut pour reussir votre evenement
           </h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {features.map(({ icon: Icon, title, text }) => (

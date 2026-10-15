@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 
-function extractToken(req) {
+export function extractToken(req) {
   const header = req.headers.authorization || '';
   if (header.startsWith('Bearer ')) {
     return header.slice(7).trim();

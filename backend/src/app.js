@@ -18,6 +18,20 @@ app.set('trust proxy', 1);
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    contentSecurityPolicy: {
+      useDefaults: true,
+      directives: {
+        imgSrc: [
+          "'self'",
+          'data:',
+          'blob:',
+          'https://*.tile.openstreetmap.org',
+          'https://tile.openstreetmap.org',
+          'https://*.basemaps.cartocdn.com',
+          'https://res.cloudinary.com',
+        ],
+      },
+    },
   }),
 );
 

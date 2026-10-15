@@ -22,22 +22,34 @@ export default function PublicLayout() {
             Mon Celebra
           </Link>
           <nav className="flex items-center gap-2" aria-label="Navigation principale">
-            {user ? (
+            {user?.role === 'admin' ? (
               <>
                 <Link to="/dashboard" className="btn-outline">
                   Tableau de bord
+                </Link>
+                <Link to="/admin" className="btn-outline">
+                  Administration
                 </Link>
                 <button type="button" onClick={handleLogout} className="btn-outline">
                   Deconnexion
                 </button>
               </>
+            ) : user ? (
+              <>
+                <Link to="/dashboard" className="btn-primary">
+                  Mon espace
+                </Link>
+                <Link to="/connexion" className="btn-outline">
+                  Admin
+                </Link>
+              </>
             ) : (
               <>
-                <Link to="/connexion" className="btn-outline">
-                  Connexion
+                <Link to="/dashboard" className="btn-primary">
+                  Creer un evenement
                 </Link>
-                <Link to="/inscription" className="btn-primary">
-                  Creer un compte
+                <Link to="/connexion" className="btn-outline">
+                  Admin
                 </Link>
               </>
             )}
@@ -50,7 +62,7 @@ export default function PublicLayout() {
       </main>
 
       <footer className="border-t border-celebra-dark/10 bg-white py-6 text-center text-sm text-celebra-dark/60">
-        &copy; {new Date().getFullYear()} Mon Celebra — Chaque moment merite d'etre
+        &copy; {new Date().getFullYear()} Mon Celebra — Chaque moment merite d&apos;etre
         celebre.
       </footer>
     </div>

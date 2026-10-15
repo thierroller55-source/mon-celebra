@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
     avatar: { type: imageSchema, default: undefined },
     isActive: { type: Boolean, default: true },
     emailVerified: { type: Boolean, default: false },
+    isGuest: { type: Boolean, default: false, index: true },
     resetTokenHash: { type: String, select: false },
     resetTokenExpiresAt: { type: Date, select: false },
     lastLoginAt: { type: Date },

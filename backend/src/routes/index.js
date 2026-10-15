@@ -1,5 +1,16 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
+import authRoutes from './auth.routes.js';
+import userRoutes from './user.routes.js';
+import publicRoutes from './public.routes.js';
+import uploadRoutes from './upload.routes.js';
+import eventRoutes from './event.routes.js';
+import categoryRoutes from './category.routes.js';
+import templateRoutes from './template.routes.js';
+import reportRoutes from './report.routes.js';
+import adminRoutes from './admin.routes.js';
+import geoRoutes from './geo.routes.js';
+import notificationRoutes from './notification.routes.js';
 
 const router = Router();
 
@@ -14,9 +25,27 @@ router.get('/health', (req, res) => {
   });
 });
 
-// Les routeurs metier sont montes ici au fur et a mesure des etapes :
-// router.use('/auth', authRoutes);
-// router.use('/events', eventRoutes);
-// ...
+// Auth & profil
+router.use('/auth', authRoutes);
+router.use('/users', userRoutes);
+
+// Evenements (organisateur, authentifie)
+router.use('/events', eventRoutes);
+
+// Upload d'images (authentifie)
+router.use('/uploads', uploadRoutes);
+
+// Catalogue (public)
+router.use('/categories', categoryRoutes);
+router.use('/templates', templateRoutes);
+
+// Public (invites)
+router.use('/public', publicRoutes);
+router.use('/reports', reportRoutes);
+router.use('/geo', geoRoutes);
+router.use('/notifications', notificationRoutes);
+
+// Administration
+router.use('/admin', adminRoutes);
 
 export default router;

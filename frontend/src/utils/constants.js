@@ -24,18 +24,7 @@ export const PLACE_TYPES = [
   { value: 'autre', label: 'Autre' },
 ];
 
-export const MVP_CATEGORIES = [
-  { slug: 'mariage', name: 'Mariage', emoji: '\u{1F48D}' },
-  { slug: 'anniversaire', name: 'Anniversaire', emoji: '\u{1F382}' },
-  { slug: 'bapteme', name: 'Bapteme', emoji: '\u{1F476}' },
-];
-
-export const FUTURE_CATEGORIES = [
-  { slug: 'graduation', name: 'Graduation' },
-  { slug: 'fiancailles', name: 'Fiancailles' },
-  { slug: 'baby-shower', name: 'Baby Shower' },
-  { slug: 'soiree', name: 'Soiree' },
-  { slug: 'inauguration', name: 'Inauguration' },
-  { slug: 'professionnel', name: 'Evenement professionnel' },
-  { slug: 'commemoration', name: 'Commemoration' },
-];
+/**
+ * Les categories proviennent desormais de l'API (/api/categories).
+ * Utiliser `categoryService.list()` ; plus de liste codee en dur.
+ */

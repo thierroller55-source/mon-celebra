@@ -9,10 +9,11 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "seed": "node seed/index.js",
-    "test": "node --test"
+    "test": "node --test \"test/**/*.test.js\""
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
@@ -27,5 +28,8 @@
     "qrcode": "^1.5.4",
     "sharp": "^0.33.5",
     "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "mongodb-memory-server": "^11.3.0"
   }
 }

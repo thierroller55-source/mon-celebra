@@ -38,6 +38,13 @@ export function AuthProvider({ children }) {
     [applySession],
   );
 
+  // Ouvre une session invite (client sans compte) et l'installe dans le contexte.
+  const guest = useCallback(async () => {
+    const data = await authService.guest();
+    applySession(data);
+    return data.user;
+  }, [applySession]);
+
   const logout = useCallback(async () => {
     try {
       await authService.logout();
@@ -66,8 +73,8 @@ export function AuthProvider({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, login, register, logout, setUser }),
-    [user, loading, login, register, logout],
+    () => ({ user, loading, login, register, guest, logout, setUser }),
+    [user, loading, login, register, guest, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

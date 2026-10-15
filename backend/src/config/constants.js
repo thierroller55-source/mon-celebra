@@ -70,9 +70,9 @@ export const CATEGORIES = Object.freeze([
   { slug: 'baby-shower', name: 'Baby Shower', icon: 'baby', isMvp: false, order: 6 },
   { slug: 'soiree', name: 'Soiree', icon: 'party-popper', isMvp: false, order: 7 },
   { slug: 'inauguration', name: 'Inauguration', icon: 'home', isMvp: false, order: 8 },
-  { slug: 'professionnel', name: 'Evenement professionnel', icon: 'briefcase', isMvp: false, order: 9 },
+  { slug: 'evenement-professionnel', name: 'Evenement professionnel', icon: 'briefcase', isMvp: false, order: 9 },
   { slug: 'commemoration', name: 'Commemoration', icon: 'dove', isMvp: false, order: 10 },
-  { slug: 'autre', name: 'Autre evenement', icon: 'sparkles', isMvp: false, order: 11 },
+  { slug: 'autres', name: 'Autres evenements', icon: 'sparkles', isMvp: false, order: 11 },
 ]);
 
 export const CATEGORY_SLUGS = Object.freeze(CATEGORIES.map((c) => c.slug));

@@ -1,12 +1,21 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth.js';
+import { Check, X } from 'lucide-react';
+import { authService } from '../../services/auth.service.js';
 import { getErrorMessage } from '../../services/api.js';
+import PasswordField from '../../components/auth/PasswordField.jsx';
+import {
+  passwordChecks,
+  passwordScore,
+  isStrongPassword,
+  PASSWORD_POLICY_MESSAGE,
+} from '../../utils/password.js';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const STRENGTH_LABELS = ['Tres faible', 'Faible', 'Moyen', 'Bon', 'Tres bon'];
+const STRENGTH_COLORS = ['bg-red-500', 'bg-red-400', 'bg-amber-400', 'bg-lime-500', 'bg-green-500'];
 
 export default function Register() {
-  const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
     firstName: '',
@@ -21,6 +30,10 @@ export default function Register() {
   const handleChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
+  const checks = passwordChecks(form.password);
+  const score = passwordScore(form.password);
+  const showMeter = form.password.length > 0;
+
   const validate = () => {
     if (!form.firstName.trim() || !form.lastName.trim()) {
       return 'Le prenom et le nom sont obligatoires.';
@@ -28,8 +41,8 @@ export default function Register() {
     if (!EMAIL_RE.test(form.email)) {
       return 'Veuillez saisir une adresse email valide.';
     }
-    if (form.password.length < 8) {
-      return 'Le mot de passe doit contenir au moins 8 caracteres.';
+    if (!isStrongPassword(form.password)) {
+      return PASSWORD_POLICY_MESSAGE;
     }
     if (form.password !== form.confirmPassword) {
       return 'Les mots de passe ne correspondent pas.';
@@ -47,13 +60,13 @@ export default function Register() {
     setError('');
     setSubmitting(true);
     try {
-      await register({
+      await authService.register({
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
         email: form.email.trim(),
         password: form.password,
       });
-      navigate('/dashboard');
+      navigate('/admin/utilisateurs');
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -63,7 +76,11 @@ export default function Register() {
 
   return (
     <div className="mx-auto w-full max-w-md px-4 py-12">
-      <h1 className="mb-6 text-center text-2xl font-bold">Creer un compte</h1>
+      <h1 className="mb-2 text-center text-2xl font-bold">Creer un compte administrateur</h1>
+      <p className="mb-6 text-center text-sm text-celebra-dark/60">
+        Ce formulaire cree un acces a l&apos;administration. Les clients n&apos;ont pas
+        besoin de compte.
+      </p>
 
       {error && (
         <p
@@ -122,40 +139,68 @@ export default function Register() {
           />
         </div>
 
-        <div>
-          <label htmlFor="password" className="label">
-            Mot de passe
-          </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="input"
-            autoComplete="new-password"
-            required
-            value={form.password}
-            onChange={handleChange}
-          />
-          <p className="mt-1 text-xs text-celebra-dark/50">
-            8 caracteres minimum.
-          </p>
-        </div>
+        <PasswordField
+          id="password"
+          name="password"
+          label="Mot de passe"
+          autoComplete="new-password"
+          required
+          value={form.password}
+          onChange={handleChange}
+        >
+          {showMeter && (
+            <div className="mt-2 space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-celebra-dark/10">
+                  <div
+                    className={`h-full rounded-full transition-all ${STRENGTH_COLORS[score - 1] || ''}`}
+                    style={{ width: `${(score / 5) * 100}%` }}
+                  />
+                </div>
+                <span className="w-20 text-right text-xs text-celebra-dark/60">
+                  {STRENGTH_LABELS[score - 1] || ''}
+                </span>
+              </div>
+              <ul className="grid gap-1">
+                {checks.map((rule) => (
+                  <li
+                    key={rule.key}
+                    className={`flex items-center gap-1.5 text-xs ${
+                      rule.ok ? 'text-green-600' : 'text-celebra-dark/50'
+                    }`}
+                  >
+                    {rule.ok ? <Check size={13} /> : <X size={13} />}
+                    {rule.label}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </PasswordField>
 
-        <div>
-          <label htmlFor="confirmPassword" className="label">
-            Confirmer le mot de passe
-          </label>
-          <input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            className="input"
-            autoComplete="new-password"
-            required
-            value={form.confirmPassword}
-            onChange={handleChange}
-          />
-        </div>
+        <PasswordField
+          id="confirmPassword"
+          name="confirmPassword"
+          label="Confirmer le mot de passe"
+          autoComplete="new-password"
+          required
+          value={form.confirmPassword}
+          onChange={handleChange}
+        >
+          {form.confirmPassword.length > 0 && (
+            <p
+              className={`mt-1 text-xs ${
+                form.password === form.confirmPassword
+                  ? 'text-green-600'
+                  : 'text-red-600'
+              }`}
+            >
+              {form.password === form.confirmPassword
+                ? 'Les mots de passe correspondent.'
+                : 'Les mots de passe ne correspondent pas.'}
+            </p>
+          )}
+        </PasswordField>
 
         <button type="submit" className="btn-primary w-full" disabled={submitting}>
           {submitting ? 'Creation...' : 'Creer mon compte'}
@@ -163,7 +208,7 @@ export default function Register() {
       </form>
 
       <p className="mt-4 text-center text-sm text-celebra-dark/70">
-        Deja inscrit ?{' '}
+        Deja un compte ?{' '}
         <Link to="/connexion" className="font-medium text-celebra-gold">
           Se connecter
         </Link>

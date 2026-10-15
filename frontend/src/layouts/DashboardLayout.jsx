@@ -1,6 +1,8 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Plus, LogOut, Home } from 'lucide-react';
+import { LayoutDashboard, Plus, LogOut, Home, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
+import { greetUser } from '../utils/greeting.js';
+import NotificationBell from '../components/notifications/NotificationBell.jsx';
 
 const navItems = [
   { to: '/dashboard', label: 'Mes evenements', icon: LayoutDashboard, end: true },
@@ -45,18 +47,43 @@ export default function DashboardLayout() {
               {label}
             </NavLink>
           ))}
+          {user?.role === 'admin' && (
+            <NavLink
+              to="/admin"
+              className={({ isActive }) =>
+                `flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm ${
+                  isActive
+                    ? 'bg-celebra-gold/10 font-medium text-celebra-gold'
+                    : 'text-celebra-dark/70 hover:bg-celebra-dark/5'
+                }`
+              }
+            >
+              <ShieldCheck size={16} />
+              Administration
+            </NavLink>
+          )}
         </nav>
       </aside>
 
       <div className="flex flex-1 flex-col">
         <header className="flex items-center justify-between gap-3 border-b border-celebra-dark/10 bg-white px-4 py-3">
           <p className="truncate text-sm text-celebra-dark/70">
-            Bonjour {user?.firstName ?? ''} &#128075;
+            {user?.isGuest ? 'Bonjour' : greetUser(user)} &#128075;
           </p>
-          <button type="button" onClick={handleLogout} className="btn-outline">
-            <LogOut size={16} />
-            Deconnexion
-          </button>
+          <div className="flex items-center gap-2">
+            <NotificationBell />
+            {user?.role === 'admin' ? (
+              <button type="button" onClick={handleLogout} className="btn-outline">
+                <LogOut size={16} />
+                Deconnexion
+              </button>
+            ) : (
+              <Link to="/" className="btn-outline">
+                <Home size={16} />
+                Accueil
+              </Link>
+            )}
+          </div>
         </header>
         <main className="flex-1 p-4 lg:p-6">
           <Outlet />
