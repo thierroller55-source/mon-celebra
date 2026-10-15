@@ -1,5 +1,5 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Plus, LogOut, Home, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Plus, LogOut, Home, ShieldCheck, User } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
 import { greetUser } from '../utils/greeting.js';
 import NotificationBell from '../components/notifications/NotificationBell.jsx';
@@ -62,6 +62,19 @@ export default function DashboardLayout() {
               Administration
             </NavLink>
           )}
+          <NavLink
+            to="/dashboard/compte"
+            className={({ isActive }) =>
+              `flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm ${
+                isActive
+                  ? 'bg-celebra-gold/10 font-medium text-celebra-gold'
+                  : 'text-celebra-dark/70 hover:bg-celebra-dark/5'
+              }`
+            }
+          >
+            <User size={16} />
+            Mon compte
+          </NavLink>
         </nav>
       </aside>
 

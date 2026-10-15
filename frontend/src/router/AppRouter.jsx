@@ -34,6 +34,7 @@ import AdminEvents from '../pages/admin/AdminEvents.jsx';
 import AdminReports from '../pages/admin/AdminReports.jsx';
 import AdminCategories from '../pages/admin/AdminCategories.jsx';
 import AdminTemplates from '../pages/admin/AdminTemplates.jsx';
+import MonCompte from '../pages/dashboard/MonCompte.jsx';
 
 export default function AppRouter() {
   return (
@@ -65,6 +66,7 @@ export default function AppRouter() {
           <Route path="evenements/:id" element={<EventManage />} />
           <Route path="evenements/:id/editer" element={<EventEdit />} />
           <Route path="evenements/:id/apercu" element={<EventPreview />} />
+          <Route path="compte" element={<MonCompte />} />
         </Route>
       </Route>
 
