@@ -41,6 +41,10 @@ export const forgotPasswordSchema = z.object({ email });
 
 export const resetPasswordSchema = z.object({ password });
 
+export const verifyEmailSchema = z.object({
+  token: z.string({ required_error: 'Le jeton est obligatoire.' }).trim().min(1, 'Le jeton est obligatoire.'),
+});
+
 export const updateMeSchema = z
   .object({
     firstName: z.string().trim().min(1).max(60).optional(),

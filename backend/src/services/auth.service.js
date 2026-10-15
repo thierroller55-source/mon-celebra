@@ -70,3 +70,11 @@ export function createResetToken() {
 export function hashResetToken(token) {
   return crypto.createHash('sha256').update(String(token)).digest('hex');
 }
+
+/** Hash + expiration du token de verification d'adresse email (24h). */
+export function createEmailVerificationToken() {
+  const token = crypto.randomBytes(32).toString('hex');
+  const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  return { token, tokenHash, expiresAt };
+}

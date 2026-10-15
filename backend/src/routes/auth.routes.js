@@ -2,11 +2,13 @@ import { Router } from 'express';
 import { validate } from '../middleware/validate.js';
 import { authLimiter } from '../middleware/rateLimiter.js';
 import { requireAdminOrBootstrap } from '../middleware/role.js';
+import { verifyToken } from '../middleware/auth.js';
 import {
   registerSchema,
   loginSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
 } from '../validators/auth.schema.js';
 import {
   register,
@@ -16,6 +18,8 @@ import {
   guestSession,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  resendVerification,
 } from '../controllers/auth.controller.js';
 
 const router = Router();
@@ -30,5 +34,9 @@ router.post('/refresh', authLimiter, refresh);
 router.post('/guest', guestSession);
 router.post('/forgot-password', authLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password/:token', authLimiter, validate(resetPasswordSchema), resetPassword);
+
+// Verification d'adresse email.
+router.post('/verify-email', authLimiter, validate(verifyEmailSchema), verifyEmail);
+router.post('/resend-verification', authLimiter, verifyToken, resendVerification);
 
 export default router;

@@ -11,6 +11,7 @@ import Login from '../pages/auth/Login.jsx';
 import Register from '../pages/auth/Register.jsx';
 import ForgotPassword from '../pages/auth/ForgotPassword.jsx';
 import ResetPassword from '../pages/auth/ResetPassword.jsx';
+import VerifyEmail from '../pages/auth/VerifyEmail.jsx';
 import Dashboard from '../pages/dashboard/Dashboard.jsx';
 import EventManage from '../pages/dashboard/EventManage.jsx';
 import EventEdit from '../pages/dashboard/EventEdit.jsx';
@@ -45,6 +46,7 @@ export default function AppRouter() {
         <Route path="inscription" element={<Register />} />
         <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
         <Route path="reinitialiser-mot-de-passe/:token" element={<ResetPassword />} />
+        <Route path="verifier-email/:token" element={<VerifyEmail />} />
       </Route>
 
       <Route element={<ClientRoute />}>

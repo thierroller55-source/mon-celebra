@@ -29,6 +29,11 @@ const schema = z.object({
   CLOUDINARY_CLOUD_NAME: optionalString,
   CLOUDINARY_API_KEY: optionalString,
   CLOUDINARY_API_SECRET: optionalString,
+  // Envoi d'emails transactionnels via Brevo (optionnel : desactive si absent).
+  BREVO_API_KEY: optionalString,
+  MAIL_FROM: z.string().email().default('no-reply@moncelebra.com'),
+  MAIL_FROM_NAME: z.string().default('Mon Celebra'),
+  MAIL_REPLY_TO: optionalString,
 }).superRefine((data, ctx) => {
   const cloudinaryVars = [
     data.CLOUDINARY_CLOUD_NAME,
@@ -69,15 +74,26 @@ const cloudinaryConfigured = Boolean(
     parsed.data.CLOUDINARY_API_SECRET,
 );
 
+// Premiere origine cliente (sert a construire les liens dans les emails).
+const clientUrl = parsed.data.CLIENT_URL.split(',')[0].trim().replace(/\/+$/, '');
+
 export const env = {
   ...parsed.data,
   isProduction: parsed.data.NODE_ENV === 'production',
   uploadDir: path.resolve(__dirname, '../../', parsed.data.UPLOAD_DIR),
   storageDriver: parsed.data.STORAGE_DRIVER,
+  clientUrl,
   cloudinary: {
     enabled: parsed.data.STORAGE_DRIVER === 'cloudinary' && cloudinaryConfigured,
     cloudName: parsed.data.CLOUDINARY_CLOUD_NAME,
     apiKey: parsed.data.CLOUDINARY_API_KEY,
     apiSecret: parsed.data.CLOUDINARY_API_SECRET,
+  },
+  brevo: {
+    enabled: Boolean(parsed.data.BREVO_API_KEY),
+    apiKey: parsed.data.BREVO_API_KEY,
+    from: parsed.data.MAIL_FROM,
+    fromName: parsed.data.MAIL_FROM_NAME,
+    replyTo: parsed.data.MAIL_REPLY_TO,
   },
 };

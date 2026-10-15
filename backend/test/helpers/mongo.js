@@ -18,6 +18,8 @@ process.env.REFRESH_TOKEN_SECRET =
   process.env.REFRESH_TOKEN_SECRET || 'test-refresh-secret-1234567890';
 process.env.STORAGE_DRIVER = 'local';
 process.env.UPLOAD_DIR = path.join(os.tmpdir(), 'moncelebra-test-uploads');
+// Desactive l'envoi d'emails (Brevo) : aucun email reel ne doit partir des tests.
+process.env.BREVO_API_KEY = '';
 
 const mongoServer = await MongoMemoryServer.create();
 
