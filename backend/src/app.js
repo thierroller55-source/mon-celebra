@@ -8,6 +8,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import { env } from './config/env.js';
 import apiRoutes from './routes/index.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
+import { originGuard } from './middleware/originGuard.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -71,7 +72,7 @@ app.get('/', (req, res) => {
   });
 });
 
-app.use('/api', globalLimiter, apiRoutes);
+app.use('/api', originGuard, globalLimiter, apiRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

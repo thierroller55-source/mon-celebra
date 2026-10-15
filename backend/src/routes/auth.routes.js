@@ -24,7 +24,7 @@ const router = Router();
 router.post('/register', authLimiter, requireAdminOrBootstrap, validate(registerSchema), register);
 router.post('/login', authLimiter, validate(loginSchema), login);
 router.post('/logout', logout);
-router.post('/refresh', refresh);
+router.post('/refresh', authLimiter, refresh);
 
 // Session invite pour les clients sans compte.
 router.post('/guest', guestSession);

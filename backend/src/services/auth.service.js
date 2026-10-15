@@ -34,12 +34,18 @@ export function verifyRefreshToken(token) {
   return jwt.verify(token, env.REFRESH_TOKEN_SECRET);
 }
 
-/** Options du cookie httpOnly qui transporte le refresh token. */
+/**
+ * Options du cookie httpOnly qui transporte le refresh token.
+ * Frontend et API etant sur des domaines distincts en production, le cookie
+ * doit etre "SameSite=None; Secure" pour etre envoye en cross-site. Ce
+ * comportement reste configurable via COOKIE_SAMESITE (utile si un meme
+ * domaine racine sert le front et l'API).
+ */
 function refreshCookieOptions() {
   return {
     httpOnly: true,
     secure: env.isProduction,
-    sameSite: 'lax',
+    sameSite: env.COOKIE_SAMESITE || (env.isProduction ? 'none' : 'lax'),
     path: '/api/auth',
     maxAge: parseDuration(env.REFRESH_TOKEN_EXPIRES_IN, 7 * 86_400_000),
   };

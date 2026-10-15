@@ -30,3 +30,5 @@ Thumbs.db
 # Tests
 coverage/
 .vite/
+.vercel
+.env*
