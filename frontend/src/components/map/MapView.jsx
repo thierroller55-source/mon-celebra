@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import MapTiles from './MapTiles.jsx';
+import { hasGeo } from '../../lib/geo.js';
 
 function Recenter({ latitude, longitude }) {
   const map = useMap();
@@ -10,17 +11,29 @@ function Recenter({ latitude, longitude }) {
   return null;
 }
 
-export default function MapView({ latitude, longitude, label, zoom = 15, className = 'h-64' }) {
+function SizeFixer() {
+  const map = useMap();
+  useEffect(() => {
+    const fix = () => map.invalidateSize();
+    const timers = [setTimeout(fix, 0), setTimeout(fix, 250)];
+    return () => timers.forEach(clearTimeout);
+  }, [map]);
+  return null;
+}
+
+/** Carte publique en lecture seule (aucune modification possible). */
+export default function MapView({ latitude, longitude, label, zoom = 16, className = '' }) {
+  if (!hasGeo(latitude, longitude)) return null;
   const position = [Number(latitude), Number(longitude)];
-  if (!Number.isFinite(position[0]) || !Number.isFinite(position[1])) return null;
 
   return (
-    <div className={`relative z-0 overflow-hidden rounded-xl ${className}`}>
+    <div
+      className={`relative z-0 h-48 overflow-hidden rounded-xl ${className}`.trim()}
+    >
       <MapContainer center={position} zoom={zoom} scrollWheelZoom={false} className="h-full w-full">
         <MapTiles />
-        <Marker position={position}>
-          {label && <Popup>{label}</Popup>}
-        </Marker>
+        <SizeFixer />
+        <Marker position={position}>{label && <Popup>{label}</Popup>}</Marker>
         <Recenter latitude={position[0]} longitude={position[1]} />
       </MapContainer>
     </div>

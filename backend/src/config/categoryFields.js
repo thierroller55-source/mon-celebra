@@ -60,7 +60,6 @@ export const CATEGORY_FIELDS = Object.freeze({
       { key: 'celebrantName', type: 'text', label: 'Nom de la personne fetee', maxLength: 120 },
       { key: 'age', type: 'number', label: 'Age' },
       { key: 'theme', type: 'text', label: 'Theme', maxLength: 120 },
-      { key: 'celebrantPhoto', type: 'image', label: 'Photo de la personne fetee' },
       { key: 'wishlist', type: 'list', label: 'Liste de souhaits' },
       { key: 'isSurprise', type: 'boolean', label: 'Anniversaire surprise' },
       { key: 'contacts', type: 'contacts', label: 'Contacts' },

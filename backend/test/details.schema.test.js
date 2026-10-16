@@ -36,10 +36,10 @@ test('une valeur select valide est acceptee', () => {
 });
 
 test('les champs image exigent une url', () => {
-  const schema = buildDetailsSchema('anniversaire');
-  assert.equal(schema.safeParse({ celebrantPhoto: { publicId: 'x' } }).success, false);
+  const schema = buildDetailsSchema('bapteme');
+  assert.equal(schema.safeParse({ babyPhoto: { publicId: 'x' } }).success, false);
   assert.equal(
-    schema.safeParse({ celebrantPhoto: { url: 'https://img/x.png', publicId: 'x' } }).success,
+    schema.safeParse({ babyPhoto: { url: 'https://img/x.png', publicId: 'x' } }).success,
     true,
   );
 });

@@ -1,10 +1,12 @@
-import { Calendar, MapPin, Clock, Navigation } from 'lucide-react';
+import { useState } from 'react';
+import { Calendar, MapPin, Clock, Navigation, Copy, Check } from 'lucide-react';
 import Countdown from '../components/event/Countdown.jsx';
 import RsvpSection from '../components/event/RsvpSection.jsx';
 import GuestbookSection from '../components/event/GuestbookSection.jsx';
 import ReportButton from '../components/event/ReportButton.jsx';
 import MapView from '../components/map/MapView.jsx';
 import DetailsRenderer from './DetailsRenderer.jsx';
+import { googleMapsDirUrl, googleMapsSearchUrl, wazeUrl } from '../lib/geo.js';
 
 const VARIANTS = {
   classic: {
@@ -64,17 +66,30 @@ function formatDate(value) {
   });
 }
 
-function mapsUrl(location, mode = 'search') {
-  const query = `${location.latitude},${location.longitude}`;
-  const base =
-    mode === 'dir'
-      ? 'https://www.google.com/maps/dir/?api=1&destination='
-      : 'https://www.google.com/maps/search/?api=1&query=';
-  return base + encodeURIComponent(query);
+function locationMapsUrl(location, mode = 'search') {
+  return mode === 'dir'
+    ? googleMapsDirUrl(location.latitude, location.longitude)
+    : googleMapsSearchUrl(location.latitude, location.longitude);
 }
 
-function wazeUrl(location) {
-  return `https://waze.com/ul?ll=${location.latitude},${location.longitude}&navigate=yes`;
+function CopyAddressButton({ location }) {
+  const [copied, setCopied] = useState(false);
+  const text = location.address || `${location.name || location.label || ''} (${location.latitude}, ${location.longitude})`;
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard?.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      /* presse-papier indisponible */
+    }
+  };
+  return (
+    <button type="button" className="btn-outline w-full" onClick={handleCopy}>
+      {copied ? <Check size={16} /> : <Copy size={16} />}
+      {copied ? 'Adresse copiee' : "Copier l'adresse"}
+    </button>
+  );
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -221,7 +236,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
                       />
                       <div className="mt-1 grid grid-cols-2 gap-2">
                         <a
-                          href={mapsUrl(loc, 'dir')}
+                          href={locationMapsUrl(loc, 'dir')}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn-outline w-full"
@@ -230,7 +245,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
                           Itineraire
                         </a>
                         <a
-                          href={wazeUrl(loc)}
+                          href={wazeUrl(loc.latitude, loc.longitude)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn-outline w-full"
@@ -238,6 +253,9 @@ export default function EventTemplate({ event, category = null, variant = 'class
                           <Navigation size={16} />
                           Waze
                         </a>
+                        <div className="col-span-2">
+                          <CopyAddressButton location={loc} />
+                        </div>
                       </div>
                     </>
                   )}

@@ -1,9 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, ImagePlus, X } from 'lucide-react';
+import { Loader2, ImagePlus, X, LocateFixed, Link2, Loader } from 'lucide-react';
 import CategoryForm from '../form/CategoryForm.jsx';
 import MapPicker from '../map/MapPicker.jsx';
 import AddressSearch from '../map/AddressSearch.jsx';
 import { PLACE_TYPES } from '../../utils/constants.js';
+import { geoService } from '../../services/geo.service.js';
+import { getErrorMessage } from '../../services/api.js';
+import { parseGoogleMapsUrl, isShortMapsLink, isValidLatLng } from '../../lib/geo.js';
 
 function toDateInput(value) {
   if (!value) return '';
@@ -69,6 +72,10 @@ export default function EventForm({
   const [posterFile, setPosterFile] = useState(null);
   const [posterPreview, setPosterPreview] = useState(() => event?.mainImage?.url || '');
   const [removePoster, setRemovePoster] = useState(false);
+  const [geoBusy, setGeoBusy] = useState(false);
+  const [linkValue, setLinkValue] = useState('');
+  const [linkBusy, setLinkBusy] = useState(false);
+  const [locationNote, setLocationNote] = useState('');
 
   useEffect(() => {
     setForm(buildInitial(categorySlug, event));
@@ -88,12 +95,71 @@ export default function EventForm({
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
-  const handlePickLocation = (latitude, longitude) =>
+  const handlePickLocation = (latitude, longitude) => {
+    setLocationNote('');
     setForm((f) => ({
       ...f,
       latitude: latitude.toFixed(6),
       longitude: longitude.toFixed(6),
     }));
+  };
+
+  const handleGeolocate = () => {
+    if (!navigator.geolocation) {
+      setLocationNote("La geolocalisation n'est pas disponible sur cet appareil.");
+      return;
+    }
+    setGeoBusy(true);
+    setLocationNote('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setForm((f) => ({
+          ...f,
+          latitude: pos.coords.latitude.toFixed(6),
+          longitude: pos.coords.longitude.toFixed(6),
+        }));
+        setGeoBusy(false);
+        setLocationNote('Position actuelle selectionnee. Ajustez-la si besoin.');
+      },
+      (err) => {
+        setGeoBusy(false);
+        setLocationNote(
+          err.code === err.PERMISSION_DENIED
+            ? 'Acces refuse : autorisez la localisation dans votre navigateur.'
+            : "Impossible d'obtenir votre position.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000 },
+    );
+  };
+
+  const handleMapsLink = async () => {
+    const value = linkValue.trim();
+    if (!value) return;
+    setLocationNote('');
+    const direct = parseGoogleMapsUrl(value);
+    if (direct) {
+      handlePickLocation(direct.lat, direct.lng);
+      setLinkValue('');
+      setLocationNote('Position extraite du lien Google Maps.');
+      return;
+    }
+    if (!isShortMapsLink(value)) {
+      setLocationNote('Lien Google Maps non reconnu.');
+      return;
+    }
+    setLinkBusy(true);
+    try {
+      const coords = await geoService.resolveLink(value);
+      handlePickLocation(coords.lat, coords.lng);
+      setLinkValue('');
+      setLocationNote('Position extraite du lien Google Maps.');
+    } catch (err) {
+      setLocationNote(getErrorMessage(err));
+    } finally {
+      setLinkBusy(false);
+    }
+  };
 
   const handlePosterSelect = (file) => {
     if (!file) return;
@@ -139,8 +205,10 @@ export default function EventForm({
     const location = { label: form.locationLabel, type: form.locationType };
     if (form.locationName.trim()) location.name = form.locationName.trim();
     if (form.locationAddress.trim()) location.address = form.locationAddress.trim();
-    if (form.latitude !== '') location.latitude = Number(form.latitude);
-    if (form.longitude !== '') location.longitude = Number(form.longitude);
+    if (isValidLatLng(form.latitude, form.longitude)) {
+      location.latitude = Number(form.latitude);
+      location.longitude = Number(form.longitude);
+    }
     payload.location = location;
 
     if (form.visibility === 'password' && form.accessCode) {
@@ -340,6 +408,71 @@ export default function EventForm({
         </div>
 
         <div>
+          <p className="label mb-1">Rechercher une adresse</p>
+          <AddressSearch
+            onSelect={({ address, lat, lng }) => {
+              setLocationNote('');
+              setForm((f) => ({
+                ...f,
+                locationAddress: address,
+                latitude: lat.toFixed(6),
+                longitude: lng.toFixed(6),
+              }));
+            }}
+          />
+        </div>
+
+        <div>
+          <p className="label">Position sur la carte</p>
+          <MapPicker
+            latitude={form.latitude}
+            longitude={form.longitude}
+            onChange={handlePickLocation}
+          />
+          <p className="mt-1 text-xs text-celebra-dark/50">
+            Cliquez sur la carte ou faites glisser le marqueur pour ajuster la position.
+          </p>
+        </div>
+
+        <div>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={handleGeolocate}
+            disabled={geoBusy}
+          >
+            {geoBusy ? <Loader className="animate-spin" size={15} /> : <LocateFixed size={15} />}
+            Ma position actuelle
+          </button>
+        </div>
+
+        <div>
+          <label htmlFor="mapsLink" className="label">Coller un lien Google Maps</label>
+          <div className="flex gap-2">
+            <input
+              id="mapsLink"
+              className="input"
+              value={linkValue}
+              onChange={(e) => setLinkValue(e.target.value)}
+              placeholder="https://maps.app.goo.gl/... ou .../@14.767,-17.397,15z"
+            />
+            <button
+              type="button"
+              className="btn-outline shrink-0"
+              onClick={handleMapsLink}
+              disabled={linkBusy || !linkValue.trim()}
+            >
+              {linkBusy ? <Loader className="animate-spin" size={15} /> : <Link2 size={15} />}
+              Utiliser
+            </button>
+          </div>
+        </div>
+
+        {locationNote && (
+          <p className="text-sm text-celebra-dark/70">{locationNote}</p>
+        )}
+
+        <div>
           <label htmlFor="locationAddress" className="label">Adresse</label>
           <input
             id="locationAddress"
@@ -347,20 +480,6 @@ export default function EventForm({
             className="input"
             value={form.locationAddress}
             onChange={handleChange}
-          />
-        </div>
-
-        <div className="mb-3">
-          <p className="label mb-1">Rechercher une adresse</p>
-          <AddressSearch
-            onSelect={({ address, lat, lng }) =>
-              setForm((f) => ({
-                ...f,
-                locationAddress: address,
-                latitude: String(lat.toFixed(6)),
-                longitude: String(lng.toFixed(6)),
-              }))
-            }
           />
         </div>
 
@@ -372,6 +491,8 @@ export default function EventForm({
               name="latitude"
               type="number"
               step="any"
+              min="-90"
+              max="90"
               className="input"
               value={form.latitude}
               onChange={handleChange}
@@ -384,52 +505,20 @@ export default function EventForm({
               name="longitude"
               type="number"
               step="any"
+              min="-180"
+              max="180"
               className="input"
               value={form.longitude}
               onChange={handleChange}
             />
           </div>
         </div>
-
-        <div>
-          <p className="label">Position sur la carte (clic pour choisir)</p>
-          <MapPicker
-            latitude={form.latitude}
-            longitude={form.longitude}
-            onChange={handlePickLocation}
-          />
-        </div>
       </section>
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Couleurs (facultatif)</h2>
+        <h2 className="font-semibold">Galerie</h2>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="primaryColor" className="label">Couleur principale</label>
-            <input
-              id="primaryColor"
-              name="primaryColor"
-              type="color"
-              className="input h-11 p-1"
-              value={form.primaryColor}
-              onChange={handleChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="secondaryColor" className="label">Couleur secondaire</label>
-            <input
-              id="secondaryColor"
-              name="secondaryColor"
-              type="color"
-              className="input h-11 p-1"
-              value={form.secondaryColor}
-              onChange={handleChange}
-            />
-          </div>
-        </div>
-
-        {mode === 'create' && (
+        {mode === 'create' ? (
           <div>
             <label htmlFor="photos" className="label">
               Photos (max 20, 3 Mo par image)
@@ -448,6 +537,10 @@ export default function EventForm({
               </p>
             )}
           </div>
+        ) : (
+          <p className="text-sm text-celebra-dark/50">
+            La galerie se gere depuis la page de gestion de l&apos;evenement.
+          </p>
         )}
       </section>
 

@@ -18,9 +18,9 @@ export const OSM_ATTRIBUTION =
 
 export const OSM_TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 
-// Fournisseurs essayes dans l'ordre : si le premier est bloque (adblock,
-// filtrage reseau, DNS), on bascule automatiquement sur le suivant.
-export const TILE_PROVIDERS = [
+// Fond de secours "plan" : si tuiles OSM bloquees (adblock, filtrage reseau,
+// DNS), on bascule automatiquement sur le suivant.
+export const PLAN_PROVIDERS = [
   { key: 'osm', url: OSM_TILE_URL, attribution: OSM_ATTRIBUTION },
   {
     key: 'carto',
@@ -28,5 +28,13 @@ export const TILE_PROVIDERS = [
     attribution: `${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
   },
 ];
+
+// Vue satellite (Esri World Imagery, gratuite, attribution requise).
+export const SATELLITE_PROVIDER = {
+  key: 'esri',
+  url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  attribution:
+    'Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics, and the GIS User Community',
+};
 
 export default L;

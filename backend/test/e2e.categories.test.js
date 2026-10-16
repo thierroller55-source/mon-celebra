@@ -31,7 +31,6 @@ const SAMPLES = {
     celebrantName: 'Moussa',
     age: 30,
     theme: 'Annees 80',
-    celebrantPhoto: img('moussa'),
     wishlist: ['Voyage', 'Livre'],
     isSurprise: true,
     contacts: [{ label: 'WhatsApp', value: '+221781112233' }],
