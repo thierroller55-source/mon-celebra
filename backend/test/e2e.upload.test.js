@@ -144,6 +144,17 @@ test('affiche : upload haute qualite, format preserve, remplacement et suppressi
   assert.ok(mainImage.url.includes('/uploads/'), 'affiche stockee en local');
   assert.ok(mainImage.url.endsWith('.png'), 'format PNG preserve');
 
+  // Proxy same-origin de l'affiche (bytes pour le canvas cote navigateur)
+  const proxy = await fetch(
+    `http://127.0.0.1:${server.address().port}/api/events/${id}/poster`,
+    { headers: { Authorization: `Bearer ${authToken}` } },
+  );
+  assert.equal(proxy.status, 200);
+  assert.equal(proxy.headers.get('content-type'), 'image/png');
+  const bytes = Buffer.from(await proxy.arrayBuffer());
+  assert.ok(bytes.length > 0, "octets de l'affiche recus");
+  assert.equal(bytes.subarray(1, 4).toString('ascii'), 'PNG', 'signature PNG');
+
   // Remplacement : l'ancien fichier est supprime du disque
   const oldPublicId = mainImage.publicId;
   const jpeg = await sharp({

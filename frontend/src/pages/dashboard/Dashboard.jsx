@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Eye, Trash2, Upload, Download, Link2, Loader2, Settings2, Pencil } from 'lucide-react';
+import { Plus, Eye, Trash2, Upload, Link2, Loader2, Settings2, Pencil } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth.js';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { EVENT_STATUS_LABELS } from '../../utils/constants.js';
-import QrThumb from '../../components/event/QrThumb.jsx';
+import PosterDownload from '../../components/event/PosterDownload.jsx';
 
 function formatDate(value) {
   if (!value) return 'Date a definir';
@@ -97,19 +97,6 @@ export default function Dashboard() {
     navigator.clipboard?.writeText(`${window.location.origin}/e/${event.slug}`);
   };
 
-  const handleQr = async (event) => {
-    try {
-      const url = await eventService.fetchQrBlobUrl(event._id);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${event.slug}-qr.png`;
-      link.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      setError(getErrorMessage(err));
-    }
-  };
-
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
@@ -147,38 +134,21 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:grid-cols-2">
           {events.map((event) => (
             <article key={event._id} className="card flex flex-col overflow-hidden">
-              <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[1fr_auto]">
-                <div className="overflow-hidden rounded-lg bg-celebra-dark/5">
-                  {event.mainImage?.url ? (
-                    <img
-                      src={event.mainImage.url}
-                      alt={`Affiche de ${event.title}`}
-                      className="h-48 w-full object-contain"
-                      loading="lazy"
-                    />
-                  ) : (
-                    <div
-                      className="flex h-48 w-full items-center justify-center text-xs text-white/80"
-                      style={{
-                        background: `linear-gradient(135deg, ${
-                          event.design?.primaryColor || '#B08D57'
-                        }, ${event.design?.secondaryColor || '#1F2937'})`,
-                      }}
-                    >
-                      Aucune affiche importee
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col items-center justify-center gap-2">
-                  <QrThumb
-                    eventId={event._id}
-                    className="h-28 w-28 rounded-lg border border-celebra-dark/10 bg-white object-contain"
-                  />
-                  <p className="max-w-[8rem] text-center text-[11px] leading-tight text-celebra-dark/60">
-                    Pour en savoir plus et decouvrir toutes les informations, scannez le QR Code.
-                  </p>
-                </div>
+              <div className="p-4">
+                {event.mainImage?.url ? (
+                  <PosterDownload event={event} />
+                ) : (
+                  <div
+                    className="flex h-40 items-center justify-center rounded-lg text-sm text-white/90"
+                    style={{
+                      background: `linear-gradient(135deg, ${
+                        event.design?.primaryColor || '#B08D57'
+                      }, ${event.design?.secondaryColor || '#1F2937'})`,
+                    }}
+                  >
+                    Aucune affiche importee
+                  </div>
+                )}
               </div>
 
               <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
@@ -255,14 +225,6 @@ export default function Dashboard() {
                     title="Copier le lien"
                   >
                     <Link2 size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-outline"
-                    onClick={() => handleQr(event)}
-                    title="Telecharger le QR code"
-                  >
-                    <Download size={15} />
                   </button>
                   <button
                     type="button"

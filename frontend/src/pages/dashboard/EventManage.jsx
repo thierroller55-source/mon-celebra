@@ -16,6 +16,7 @@ import {
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
+import PosterDownload from '../../components/event/PosterDownload.jsx';
 
 const RESPONSE_LABELS = { yes: 'Oui', no: 'Non', maybe: 'Peut-etre' };
 const STATUS_STYLES = {
@@ -160,6 +161,17 @@ export default function EventManage() {
           )}
         </div>
       </div>
+
+      {event?.mainImage?.url && (
+        <div className="card mb-6 p-4">
+          <h2 className="mb-3 text-sm font-semibold text-celebra-dark/70">
+            Affiche avec QR code
+          </h2>
+          <div className="max-w-md">
+            <PosterDownload event={event} showPosition />
+          </div>
+        </div>
+      )}
 
       <div className="mb-6 flex gap-2 border-b border-celebra-dark/10">
         <button

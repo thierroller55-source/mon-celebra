@@ -7,6 +7,7 @@ import { templateService } from '../../services/template.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { resolveVariant } from '../../templates/registry.js';
 import EventTemplate from '../../templates/EventTemplate.jsx';
+import PosterDownload from '../../components/event/PosterDownload.jsx';
 
 export default function EventPreview() {
   const { id } = useParams();
@@ -75,6 +76,17 @@ export default function EventPreview() {
           <ArrowLeft size={15} /> Quitter l&apos;apercu
         </Link>
       </div>
+
+      {event.mainImage?.url && (
+        <div className="border-b border-celebra-dark/10 px-4 py-4">
+          <h2 className="mb-3 text-sm font-semibold text-celebra-dark/70">
+            Affiche avec QR code
+          </h2>
+          <div className="max-w-md">
+            <PosterDownload event={event} showPosition />
+          </div>
+        </div>
+      )}
 
       <EventTemplate event={event} category={category} variant={variant} />
     </div>

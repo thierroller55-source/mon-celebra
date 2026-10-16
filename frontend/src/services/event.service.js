@@ -24,6 +24,8 @@ export const eventService = {
   },
   removeMainImage: (id) =>
     api.delete(`/events/${id}/main-image`).then((r) => r.data.data.event),
+  fetchPosterBlob: (id) =>
+    api.get(`/events/${id}/poster`, { responseType: 'blob' }).then((r) => r.data),
   fetchQrBlobUrl: (id) =>
     api
       .get(`/events/${id}/qrcode`, { responseType: 'blob' })

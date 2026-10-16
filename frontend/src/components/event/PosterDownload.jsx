@@ -1,0 +1,132 @@
+import { useState } from 'react';
+import { Loader2, Download, Share2, QrCode, RefreshCw } from 'lucide-react';
+import { eventService } from '../../services/event.service.js';
+import { getErrorMessage } from '../../services/api.js';
+import { useToast } from '../../context/ToastContext.jsx';
+import { useComposedPoster } from '../../hooks/useComposedPoster.js';
+import { downloadBlob, shareBlob, posterFileName } from '../../lib/poster.js';
+
+/**
+ * Affiche l'affiche avec le QR code incruste + boutons de telechargement/partage.
+ * Bloc reutilise par le tableau de bord, l'apercu et la publication.
+ */
+export default function PosterDownload({
+  event,
+  showPosition = false,
+  showShare = true,
+  className = '',
+}) {
+  const toast = useToast();
+  const [position, setPosition] = useState('bottom-right');
+  const { blob, url, loading, error, reload } = useComposedPoster(event, { position });
+  const [busy, setBusy] = useState(false);
+  const [qrBusy, setQrBusy] = useState(false);
+
+  const handleDownload = async () => {
+    if (!blob) return;
+    setBusy(true);
+    try {
+      downloadBlob(blob, posterFileName(event.slug));
+      toast.success('Affiche téléchargée ✅');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleShare = async () => {
+    if (!blob) return;
+    const shared = await shareBlob(blob, posterFileName(event.slug), event.title);
+    if (!shared) {
+      downloadBlob(blob, posterFileName(event.slug));
+      toast.success('Affiche téléchargée ✅');
+    }
+  };
+
+  const handleQr = async () => {
+    setQrBusy(true);
+    try {
+      const qrUrl = await eventService.fetchQrBlobUrl(event._id);
+      const link = document.createElement('a');
+      link.href = qrUrl;
+      link.download = `${event.slug}-qr.png`;
+      link.click();
+      URL.revokeObjectURL(qrUrl);
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setQrBusy(false);
+    }
+  };
+
+  return (
+    <div className={className}>
+      <div className="flex min-h-[12rem] items-center justify-center rounded-lg bg-celebra-dark/5 p-2">
+        {loading && <Loader2 className="animate-spin text-celebra-dark/40" size={22} />}
+
+        {!loading && error && (
+          <div className="px-4 text-center text-sm text-celebra-dark/60">
+            <p>{error}</p>
+            <button type="button" className="btn-outline mt-3" onClick={reload}>
+              <RefreshCw size={15} /> Reessayer
+            </button>
+          </div>
+        )}
+
+        {!loading && !error && url && (
+          <img
+            src={url}
+            alt={`Affiche de ${event.title}`}
+            className="max-h-80 w-full object-contain"
+          />
+        )}
+      </div>
+
+      {showPosition && (
+        <div className="mt-3">
+          <label htmlFor="qr-position" className="label">
+            Position du QR code
+          </label>
+          <select
+            id="qr-position"
+            className="input"
+            value={position}
+            onChange={(e) => setPosition(e.target.value)}
+          >
+            <option value="bottom-right">En bas a droite</option>
+            <option value="bottom-left">En bas a gauche</option>
+            <option value="bottom-center">En bas au centre</option>
+          </select>
+        </div>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <button
+          type="button"
+          className="btn-primary"
+          onClick={handleDownload}
+          disabled={!blob || busy}
+        >
+          {loading || busy ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
+          Telecharger l&apos;affiche
+        </button>
+
+        {showShare && (
+          <button type="button" className="btn-outline" onClick={handleShare} disabled={!blob || loading}>
+            <Share2 size={15} /> Partager
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="btn-outline"
+          onClick={handleQr}
+          disabled={qrBusy}
+          title="Telecharger le QR code seul"
+        >
+          {qrBusy ? <Loader2 className="animate-spin" size={15} /> : <QrCode size={15} />}
+          QR seul
+        </button>
+      </div>
+    </div>
+  );
+}

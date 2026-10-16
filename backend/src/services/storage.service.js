@@ -67,6 +67,25 @@ export async function uploadImage(buffer, { folder = 'moncelebra', extension = '
   return uploadToLocal(buffer, { extension });
 }
 
+/**
+ * Recupere les octets d'une image stockee (locale ou distante) afin de la
+ * restituer via l'API, par exemple pour un acces same-origin (proxy affiche).
+ * Evite ainsi les problemes de canvas "contamine" cote navigateur.
+ */
+export async function fetchImageBytes({ url, publicId }) {
+  if (!url) throw new Error('Image introuvable.');
+
+  if (!env.cloudinary.enabled && publicId && !/^https?:\/\//i.test(publicId)) {
+    return fs.readFile(path.join(env.uploadDir, publicId));
+  }
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Echec du telechargement de l'image (${response.status}).`);
+  }
+  return Buffer.from(await response.arrayBuffer());
+}
+
 /** Supprime une image stockee a partir de son publicId. */
 export async function deleteImage(publicId) {
   if (!publicId) return false;

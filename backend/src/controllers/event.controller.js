@@ -4,6 +4,7 @@ import { GuestbookMessage } from '../models/GuestbookMessage.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as eventService from '../services/event.service.js';
+import { fetchImageBytes } from '../services/storage.service.js';
 
 export const listEvents = asyncHandler(async (req, res) => {
   const events = await Event.find({ ownerId: req.user.id }).sort({ createdAt: -1 });
@@ -50,6 +51,28 @@ export const uploadMainImage = asyncHandler(async (req, res) => {
 export const deleteMainImage = asyncHandler(async (req, res) => {
   const event = await eventService.removeMainImage(req.event);
   res.json({ success: true, data: { event } });
+});
+
+const POSTER_MIME = {
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  webp: 'image/webp',
+};
+
+/** Restitue les octets de l'affiche via l'API (same-origin, sans CORS). */
+export const getEventPoster = asyncHandler(async (req, res) => {
+  const image = req.event.mainImage;
+  if (!image?.url) {
+    throw ApiError.notFound("Aucune affiche pour cet evenement.", 'NO_POSTER');
+  }
+
+  const buffer = await fetchImageBytes(image);
+  const ext = (image.publicId || image.url).split('.').pop().toLowerCase();
+
+  res.set('Content-Type', POSTER_MIME[ext] || 'application/octet-stream');
+  res.set('Cache-Control', 'private, max-age=300');
+  res.send(buffer);
 });
 
 export const addPhotos = asyncHandler(async (req, res) => {

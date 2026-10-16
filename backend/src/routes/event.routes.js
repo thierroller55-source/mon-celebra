@@ -25,6 +25,7 @@ import {
   unarchiveEvent,
   uploadMainImage,
   deleteMainImage,
+  getEventPoster,
 } from '../controllers/event.controller.js';
 import { getEventQr } from '../controllers/qrcode.controller.js';
 
@@ -47,6 +48,7 @@ router.delete('/:id/photos/:photoId', requireEventOwner, removePhoto);
 
 router.post('/:id/main-image', requireEventOwner, uploadPoster, uploadMainImage);
 router.delete('/:id/main-image', requireEventOwner, deleteMainImage);
+router.get('/:id/poster', requireEventOwner, getEventPoster);
 
 router.get('/:id/rsvp', requireEventOwner, listRsvp);
 router.get('/:id/rsvp/export', requireEventOwner, exportRsvp);
