@@ -15,6 +15,15 @@ export const eventService = {
   },
   removePhoto: (id, photoId) =>
     api.delete(`/events/${id}/photos/${photoId}`).then((r) => r.data.data),
+  uploadMainImage: (id, file) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    return api
+      .post(`/events/${id}/main-image`, formData)
+      .then((r) => r.data.data.event);
+  },
+  removeMainImage: (id) =>
+    api.delete(`/events/${id}/main-image`).then((r) => r.data.data.event),
   fetchQrBlobUrl: (id) =>
     api
       .get(`/events/${id}/qrcode`, { responseType: 'blob' })

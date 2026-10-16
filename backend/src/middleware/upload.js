@@ -18,12 +18,20 @@ function fileFilter(req, file, cb) {
 }
 
 const maxSize = Math.min(env.MAX_FILE_SIZE_MB, QUOTAS.MAX_FILE_SIZE_MB) * 1024 * 1024;
+const posterMaxSize = QUOTAS.MAX_POSTER_SIZE_MB * 1024 * 1024;
 
 /** Upload d'une image unique (champ "image"). */
 export const uploadSingle = multer({
   storage,
   fileFilter,
   limits: { fileSize: maxSize, files: 1 },
+}).single('image');
+
+/** Upload de l'affiche (champ "image"), limite dediee haute qualite. */
+export const uploadPoster = multer({
+  storage,
+  fileFilter,
+  limits: { fileSize: posterMaxSize, files: 1 },
 }).single('image');
 
 /** Upload de plusieurs images (champ "photos"), max galerie. */

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import { requireEventOwner } from '../middleware/ownership.js';
 import { validate } from '../middleware/validate.js';
-import { uploadMultiple } from '../middleware/upload.js';
+import { uploadMultiple, uploadPoster } from '../middleware/upload.js';
 import { createEventSchema, updateEventSchema } from '../validators/event.schema.js';
 import { guestbookModerationSchema } from '../validators/guestbook.schema.js';
 import {
@@ -23,6 +23,8 @@ import {
   duplicateEvent,
   archiveEvent,
   unarchiveEvent,
+  uploadMainImage,
+  deleteMainImage,
 } from '../controllers/event.controller.js';
 import { getEventQr } from '../controllers/qrcode.controller.js';
 
@@ -42,6 +44,9 @@ router.post('/:id/unpublish', requireEventOwner, unpublishEvent);
 
 router.post('/:id/photos', requireEventOwner, uploadMultiple, addPhotos);
 router.delete('/:id/photos/:photoId', requireEventOwner, removePhoto);
+
+router.post('/:id/main-image', requireEventOwner, uploadPoster, uploadMainImage);
+router.delete('/:id/main-image', requireEventOwner, deleteMainImage);
 
 router.get('/:id/rsvp', requireEventOwner, listRsvp);
 router.get('/:id/rsvp/export', requireEventOwner, exportRsvp);

@@ -261,7 +261,6 @@ export const CATEGORY_FIELDS = Object.freeze({
     templates: ['Universel', 'Moderne', 'Elegant', 'Festif', 'Minimaliste'],
     fields: [
       { key: 'customSubType', type: 'text', label: 'Type / sous-categorie', maxLength: 160 },
-      { key: 'mainImage', type: 'image', label: 'Image principale' },
       { key: 'organizerName', type: 'text', label: 'Organisateur', maxLength: 160 },
       { key: 'practicalInfo', type: 'textarea', label: 'Informations pratiques' },
       { key: 'sections', type: 'sections', label: 'Sections personnalisees' },

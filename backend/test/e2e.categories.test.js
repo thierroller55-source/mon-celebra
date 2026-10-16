@@ -121,7 +121,6 @@ const SAMPLES = {
   },
   autres: {
     customSubType: 'Fete de quartier',
-    mainImage: img('quartier'),
     organizerName: 'Comite de quartier',
     practicalInfo: 'Tout public.',
     sections: [{ title: 'Programme', content: 'Animation et restauration.' }],

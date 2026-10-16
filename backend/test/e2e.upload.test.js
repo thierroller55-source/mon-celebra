@@ -11,6 +11,7 @@ import { connectTestDB, disconnectTestDB, stopMongo } from './helpers/mongo.js';
 
 let server;
 let api;
+let authToken;
 const uploadDir = process.env.UPLOAD_DIR;
 
 test.before(async () => {
@@ -21,7 +22,8 @@ test.before(async () => {
   });
   api = createApiClient(`http://127.0.0.1:${server.address().port}/api`);
   const guest = await api.post('/auth/guest');
-  api.setToken(guest.body.data.accessToken);
+  authToken = guest.body.data.accessToken;
+  api.setToken(authToken);
   await fs.mkdir(uploadDir, { recursive: true }).catch(() => {});
 });
 
@@ -100,4 +102,65 @@ test('upload refuse : fichier trop volumineux -> 400', async () => {
   const res = await upload(new Blob([big], { type: 'image/jpeg' }), 'gros.jpg');
   assert.equal(res.status, 400);
   assert.equal(res.body.code, 'UPLOAD_ERROR');
+});
+
+async function uploadPoster(eventId, blob, filename) {
+  const fd = new FormData();
+  fd.append('image', blob, filename);
+  const res = await fetch(
+    `http://127.0.0.1:${server.address().port}/api/events/${eventId}/main-image`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: fd,
+    },
+  );
+  return { status: res.status, body: await res.json().catch(() => ({})) };
+}
+
+test('affiche : upload haute qualite, format preserve, remplacement et suppression', async () => {
+  const created = await api.post('/events', {
+    category: 'mariage',
+    title: 'Affiche de test',
+    date: '2026-09-01',
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.event._id;
+
+  const png = await sharp({
+    create: {
+      width: 1200,
+      height: 1800,
+      channels: 4,
+      background: { r: 255, g: 255, b: 255, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  const res = await uploadPoster(id, new Blob([png], { type: 'image/png' }), 'affiche.png');
+  assert.equal(res.status, 201, JSON.stringify(res.body));
+  const mainImage = res.body.data.event.mainImage;
+  assert.ok(mainImage.url.includes('/uploads/'), 'affiche stockee en local');
+  assert.ok(mainImage.url.endsWith('.png'), 'format PNG preserve');
+
+  // Remplacement : l'ancien fichier est supprime du disque
+  const oldPublicId = mainImage.publicId;
+  const jpeg = await sharp({
+    create: { width: 800, height: 1200, channels: 3, background: { r: 20, g: 20, b: 20 } },
+  })
+    .jpeg()
+    .toBuffer();
+  const replaced = await uploadPoster(id, new Blob([jpeg], { type: 'image/jpeg' }), 'affiche.jpg');
+  assert.equal(replaced.status, 201, JSON.stringify(replaced.body));
+  assert.ok(replaced.body.data.event.mainImage.url.endsWith('.jpeg'), 'format JPEG preserve');
+  const files = await fs.readdir(uploadDir);
+  assert.ok(!files.includes(oldPublicId), 'ancienne affiche supprimee');
+
+  // Suppression
+  const del = await api.delete(`/events/${id}/main-image`);
+  assert.equal(del.status, 200);
+  assert.equal(del.body.data.event.mainImage, undefined);
+
+  await api.delete(`/events/${id}`);
 });

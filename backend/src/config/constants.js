@@ -89,6 +89,7 @@ export const QUOTAS = Object.freeze({
   MAX_ACTIVE_EVENTS: 3,
   MAX_GALLERY_PHOTOS: 20,
   MAX_FILE_SIZE_MB: 3,
+  MAX_POSTER_SIZE_MB: 8,
 });
 
 export const ALLOWED_IMAGE_MIME = Object.freeze([

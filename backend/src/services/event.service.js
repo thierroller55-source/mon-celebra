@@ -4,7 +4,7 @@ import { Rsvp } from '../models/Rsvp.js';
 import { GuestbookMessage } from '../models/GuestbookMessage.js';
 import { ApiError } from '../utils/ApiError.js';
 import { generateUniqueEventSlug } from './slug.service.js';
-import { processImage } from './image.service.js';
+import { processImage, processPoster } from './image.service.js';
 import { uploadImage, deleteImage } from './storage.service.js';
 import { QUOTAS, EVENT_STATUS, EVENT_VISIBILITY } from '../config/constants.js';
 import { CATEGORY_FIELDS } from '../config/categoryFields.js';
@@ -104,6 +104,37 @@ export async function deleteEvent(event) {
   ]);
 
   await event.deleteOne();
+}
+
+export async function setMainImage(event, file) {
+  if (!file) {
+    throw ApiError.badRequest('Aucune affiche recue.', 'NO_FILE');
+  }
+
+  const previous = event.mainImage?.publicId;
+  const processed = await processPoster(file.buffer);
+  const image = await uploadImage(processed.buffer, {
+    folder: `moncelebra/events/${event._id}/poster`,
+    extension: processed.format,
+  });
+
+  event.set('mainImage', { url: image.url, publicId: image.publicId });
+  await event.save();
+
+  if (previous) await deleteImage(previous).catch(() => {});
+
+  return event;
+}
+
+export async function removeMainImage(event) {
+  const previous = event.mainImage?.publicId;
+
+  event.set('mainImage', undefined);
+  await event.save();
+
+  if (previous) await deleteImage(previous).catch(() => {});
+
+  return event;
 }
 
 export async function addPhotos(event, files) {

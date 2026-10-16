@@ -5,6 +5,7 @@ import { useAuth } from '../../hooks/useAuth.js';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { EVENT_STATUS_LABELS } from '../../utils/constants.js';
+import QrThumb from '../../components/event/QrThumb.jsx';
 
 function formatDate(value) {
   if (!value) return 'Date a definir';
@@ -146,15 +147,41 @@ export default function Dashboard() {
         <div className="grid gap-4 sm:grid-cols-2">
           {events.map((event) => (
             <article key={event._id} className="card flex flex-col overflow-hidden">
-              <div
-                className="h-24 w-full"
-                style={{
-                  background: `linear-gradient(135deg, ${event.design?.primaryColor || '#B08D57'}, ${
-                    event.design?.secondaryColor || '#1F2937'
-                  })`,
-                }}
-              />
-              <div className="flex flex-1 flex-col gap-3 p-4">
+              <div className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-[1fr_auto]">
+                <div className="overflow-hidden rounded-lg bg-celebra-dark/5">
+                  {event.mainImage?.url ? (
+                    <img
+                      src={event.mainImage.url}
+                      alt={`Affiche de ${event.title}`}
+                      className="h-48 w-full object-contain"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div
+                      className="flex h-48 w-full items-center justify-center text-xs text-white/80"
+                      style={{
+                        background: `linear-gradient(135deg, ${
+                          event.design?.primaryColor || '#B08D57'
+                        }, ${event.design?.secondaryColor || '#1F2937'})`,
+                      }}
+                    >
+                      Aucune affiche importee
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex flex-col items-center justify-center gap-2">
+                  <QrThumb
+                    eventId={event._id}
+                    className="h-28 w-28 rounded-lg border border-celebra-dark/10 bg-white object-contain"
+                  />
+                  <p className="max-w-[8rem] text-center text-[11px] leading-tight text-celebra-dark/60">
+                    Pour en savoir plus et decouvrir toutes les informations, scannez le QR Code.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h2 className="font-semibold leading-tight">{event.title}</h2>

@@ -164,7 +164,7 @@ export const getEventCalendar = asyncHandler(async (req, res) => {
     }
   }
 
-  const url = `${env.CLIENT_URL}/e/${event.slug}`;
+  const url = `${env.clientUrl}/e/${event.slug}`;
   const ics = buildEventIcs(event, url);
 
   res.set('Content-Type', 'text/calendar; charset=utf-8');

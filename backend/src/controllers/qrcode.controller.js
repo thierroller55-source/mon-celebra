@@ -7,7 +7,7 @@ import { env } from '../config/env.js';
  * `?download=1` force le telechargement, sinon affichage inline.
  */
 export const getEventQr = asyncHandler(async (req, res) => {
-  const target = `${env.CLIENT_URL}/e/${req.event.slug}`;
+  const target = `${env.clientUrl}/e/${req.event.slug}`;
 
   const buffer = await QRCode.toBuffer(target, {
     type: 'png',

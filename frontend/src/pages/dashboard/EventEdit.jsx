@@ -33,12 +33,17 @@ export default function EventEdit() {
     };
   }, [id]);
 
-  const handleSubmit = async (payload) => {
+  const handleSubmit = async (payload, { posterFile, removePoster }) => {
     setError('');
     setFieldErrors({});
     setSubmitting(true);
     try {
       await eventService.update(id, payload);
+      if (posterFile) {
+        await eventService.uploadMainImage(id, posterFile);
+      } else if (removePoster && event?.mainImage) {
+        await eventService.removeMainImage(id);
+      }
       navigate(`/dashboard/evenements/${id}`);
     } catch (err) {
       setFieldErrors(getFieldErrors(err));

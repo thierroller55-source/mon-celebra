@@ -39,6 +39,19 @@ export const unpublishEvent = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { event } });
 });
 
+export const uploadMainImage = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw ApiError.badRequest('Aucune affiche recue.', 'NO_FILE');
+  }
+  const event = await eventService.setMainImage(req.event, req.file);
+  res.status(201).json({ success: true, data: { event } });
+});
+
+export const deleteMainImage = asyncHandler(async (req, res) => {
+  const event = await eventService.removeMainImage(req.event);
+  res.json({ success: true, data: { event } });
+});
+
 export const addPhotos = asyncHandler(async (req, res) => {
   if (!req.files?.length) {
     throw ApiError.badRequest('Aucune photo recue.', 'NO_FILE');

@@ -108,6 +108,15 @@ export default function EventTemplate({ event, category = null, variant = 'class
 
   return (
     <article>
+      {event.mainImage?.url && (
+        <div className="flex justify-center bg-celebra-dark/5">
+          <img
+            src={event.mainImage.url}
+            alt={headline || 'Affiche de l\'evenement'}
+            className="max-h-[80vh] w-full object-contain"
+          />
+        </div>
+      )}
       <header className={style.hero} style={heroStyle}>
         <p className={`mb-2 text-sm uppercase tracking-widest ${style.heroText} opacity-80`}>
           {category?.name || event.category}

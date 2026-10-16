@@ -34,11 +34,15 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
     };
   }, [categorySlug]);
 
-  const handleSubmit = async (payload, { files, publishNow }) => {
+  const handleSubmit = async (payload, { files, publishNow, posterFile }) => {
     setError('');
     setFieldErrors({});
     if (!payload.title) {
       setError('Le titre est obligatoire.');
+      return;
+    }
+    if (!posterFile) {
+      setError("L'affiche de l'evenement est obligatoire.");
       return;
     }
     if (payload.visibility === 'password' && !payload.accessCode) {
@@ -49,6 +53,7 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
     setSubmitting(true);
     try {
       let event = await eventService.create(payload);
+      event = await eventService.uploadMainImage(event._id, posterFile);
       if (publishNow) {
         event = await eventService.publish(event._id);
       }

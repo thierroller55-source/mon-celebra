@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, Palette } from 'lucide-react';
+import { Loader2, ImagePlus, X } from 'lucide-react';
 import CategoryForm from '../form/CategoryForm.jsx';
 import MapPicker from '../map/MapPicker.jsx';
 import AddressSearch from '../map/AddressSearch.jsx';
-import { templateService } from '../../services/template.service.js';
 import { PLACE_TYPES } from '../../utils/constants.js';
 
 function toDateInput(value) {
@@ -67,32 +66,25 @@ export default function EventForm({
   const [form, setForm] = useState(() => buildInitial(categorySlug, event));
   const [details, setDetails] = useState(() => event?.details || {});
   const [files, setFiles] = useState([]);
-  const [templates, setTemplates] = useState([]);
-  const [templateId, setTemplateId] = useState(() => {
-    const t = event?.templateId;
-    if (!t) return '';
-    return typeof t === 'string' ? t : t._id || '';
-  });
+  const [posterFile, setPosterFile] = useState(null);
+  const [posterPreview, setPosterPreview] = useState(() => event?.mainImage?.url || '');
+  const [removePoster, setRemovePoster] = useState(false);
 
   useEffect(() => {
     setForm(buildInitial(categorySlug, event));
     setDetails(event?.details || {});
     setFiles([]);
-    const t = event?.templateId;
-    setTemplateId(!t ? '' : typeof t === 'string' ? t : t._id || '');
+    setPosterFile(null);
+    setPosterPreview(event?.mainImage?.url || '');
+    setRemovePoster(false);
   }, [categorySlug, event]);
 
-  useEffect(() => {
-    if (!categorySlug) return;
-    let active = true;
-    templateService
-      .list(categorySlug)
-      .then((list) => active && setTemplates(list))
-      .catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [categorySlug]);
+  useEffect(
+    () => () => {
+      if (posterFile && posterPreview) URL.revokeObjectURL(posterPreview);
+    },
+    [posterFile, posterPreview],
+  );
 
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
 
@@ -103,17 +95,17 @@ export default function EventForm({
       longitude: longitude.toFixed(6),
     }));
 
-  const handleTemplate = (e) => {
-    const id = e.target.value;
-    setTemplateId(id);
-    const template = templates.find((t) => t._id === id);
-    if (template?.layout) {
-      setForm((f) => ({
-        ...f,
-        primaryColor: template.layout.primaryColor || f.primaryColor,
-        secondaryColor: template.layout.secondaryColor || f.secondaryColor,
-      }));
-    }
+  const handlePosterSelect = (file) => {
+    if (!file) return;
+    setPosterFile(file);
+    setRemovePoster(false);
+    setPosterPreview(URL.createObjectURL(file));
+  };
+
+  const clearPoster = () => {
+    setPosterFile(null);
+    setPosterPreview('');
+    setRemovePoster(true);
   };
 
   const cleanedDetails = useMemo(() => {
@@ -131,7 +123,6 @@ export default function EventForm({
       category: form.category,
       title: form.title.trim(),
       visibility: form.visibility,
-      templateId: templateId || null,
       design: {
         primaryColor: form.primaryColor,
         secondaryColor: form.secondaryColor,
@@ -160,7 +151,7 @@ export default function EventForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(buildPayload(), { files, publishNow: form.publishNow });
+    onSubmit(buildPayload(), { files, publishNow: form.publishNow, posterFile, removePoster });
   };
 
   if (!category) return null;
@@ -172,6 +163,54 @@ export default function EventForm({
           {error}
         </p>
       )}
+
+      <section className="card space-y-4 p-6">
+        <h2 className="font-semibold">Affiche de l&apos;evenement</h2>
+        <p className="text-sm text-celebra-dark/60">
+          Importez votre affiche (affiche, flyer, faire-part). Elle sera affichee telle quelle
+          a vos invites. Formats acceptes : JPEG, PNG ou WebP (max 8 Mo).
+        </p>
+
+        <input
+          id="poster"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          className="hidden"
+          onChange={(e) => handlePosterSelect(e.target.files?.[0])}
+        />
+
+        {posterPreview ? (
+          <div className="relative overflow-hidden rounded-xl border border-celebra-dark/15">
+            <img src={posterPreview} alt="Affiche" className="max-h-96 w-full object-contain" />
+            <div className="absolute right-2 top-2 flex gap-2">
+              <label
+                htmlFor="poster"
+                className="cursor-pointer rounded-lg bg-white/90 p-1.5 text-celebra-dark shadow hover:bg-white"
+                aria-label="Remplacer l'affiche"
+              >
+                <ImagePlus size={16} />
+              </label>
+              <button
+                type="button"
+                className="rounded-lg bg-white/90 p-1.5 text-red-600 shadow hover:bg-white"
+                onClick={clearPoster}
+                aria-label="Supprimer l'affiche"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <label
+            htmlFor="poster"
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-celebra-dark/20 px-4 py-10 text-center text-sm text-celebra-dark/60 hover:border-celebra-gold"
+          >
+            <ImagePlus size={24} />
+            <span className="font-medium text-celebra-dark">Importer votre affiche</span>
+            <span>JPEG, PNG ou WebP - 8 Mo max</span>
+          </label>
+        )}
+      </section>
 
       <section className="card space-y-4 p-6">
         <h2 className="font-semibold">Evenement</h2>
@@ -363,30 +402,7 @@ export default function EventForm({
       </section>
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Style & modele</h2>
-
-        {templates.length > 0 && (
-          <div>
-            <label htmlFor="templateId" className="label">
-              <Palette size={14} className="mr-1 inline" />
-              Modele graphique
-            </label>
-            <select
-              id="templateId"
-              className="input"
-              value={templateId}
-              onChange={handleTemplate}
-            >
-              <option value="">Modele par defaut</option>
-              {templates.map((t) => (
-                <option key={t._id} value={t._id}>
-                  {t.name}
-                  {t.isPremium ? ' (premium)' : ''}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+        <h2 className="font-semibold">Couleurs (facultatif)</h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
