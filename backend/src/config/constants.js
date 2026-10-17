@@ -3,7 +3,7 @@ export const ROLES = Object.freeze({
   ADMIN: 'admin',
 });
 
-export const LANGUAGES = Object.freeze(['fr', 'en']);
+export const LANGUAGES = Object.freeze(['fr', 'en', 'wo']);
 
 export const EVENT_STATUS = Object.freeze({
   DRAFT: 'draft',

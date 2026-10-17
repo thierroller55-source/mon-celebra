@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Loader2, Download, Share2, QrCode, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
@@ -17,6 +18,7 @@ export default function PosterDownload({
   className = '',
 }) {
   const toast = useToast();
+  const { t } = useTranslation();
   const [position, setPosition] = useState('bottom-right');
   const { blob, url, loading, error, reload } = useComposedPoster(event, { position });
   const [busy, setBusy] = useState(false);
@@ -27,7 +29,7 @@ export default function PosterDownload({
     setBusy(true);
     try {
       downloadBlob(blob, posterFileName(event.slug));
-      toast.success('Affiche téléchargée ✅');
+      toast.success(t('poster.downloaded'));
     } finally {
       setBusy(false);
     }
@@ -38,7 +40,7 @@ export default function PosterDownload({
     const shared = await shareBlob(blob, posterFileName(event.slug), event.title);
     if (!shared) {
       downloadBlob(blob, posterFileName(event.slug));
-      toast.success('Affiche téléchargée ✅');
+      toast.success(t('poster.downloaded'));
     }
   };
 
@@ -67,7 +69,7 @@ export default function PosterDownload({
           <div className="px-4 text-center text-sm text-celebra-dark/60">
             <p>{error}</p>
             <button type="button" className="btn-outline mt-3" onClick={reload}>
-              <RefreshCw size={15} /> Reessayer
+              <RefreshCw size={15} /> {t('common.retry')}
             </button>
           </div>
         )}
@@ -75,7 +77,7 @@ export default function PosterDownload({
         {!loading && !error && url && (
           <img
             src={url}
-            alt={`Affiche de ${event.title}`}
+            alt={t('poster.alt', { title: event.title })}
             className="max-h-80 w-full object-contain"
           />
         )}
@@ -84,7 +86,7 @@ export default function PosterDownload({
       {showPosition && (
         <div className="mt-3">
           <label htmlFor="qr-position" className="label">
-            Position du QR code
+            {t('poster.positionLabel')}
           </label>
           <select
             id="qr-position"
@@ -92,9 +94,9 @@ export default function PosterDownload({
             value={position}
             onChange={(e) => setPosition(e.target.value)}
           >
-            <option value="bottom-right">En bas a droite</option>
-            <option value="bottom-left">En bas a gauche</option>
-            <option value="bottom-center">En bas au centre</option>
+            <option value="bottom-right">{t('poster.positionRight')}</option>
+            <option value="bottom-left">{t('poster.positionLeft')}</option>
+            <option value="bottom-center">{t('poster.positionCenter')}</option>
           </select>
         </div>
       )}
@@ -107,12 +109,12 @@ export default function PosterDownload({
           disabled={!blob || busy}
         >
           {loading || busy ? <Loader2 className="animate-spin" size={16} /> : <Download size={16} />}
-          Telecharger l&apos;affiche
+          {t('poster.download')}
         </button>
 
         {showShare && (
           <button type="button" className="btn-outline" onClick={handleShare} disabled={!blob || loading}>
-            <Share2 size={15} /> Partager
+            <Share2 size={15} /> {t('poster.share')}
           </button>
         )}
 
@@ -121,10 +123,10 @@ export default function PosterDownload({
           className="btn-outline"
           onClick={handleQr}
           disabled={qrBusy}
-          title="Telecharger le QR code seul"
+          title={t('poster.qrTitle')}
         >
           {qrBusy ? <Loader2 className="animate-spin" size={15} /> : <QrCode size={15} />}
-          QR seul
+          {t('poster.downloadQr')}
         </button>
       </div>
     </div>

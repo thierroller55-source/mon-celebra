@@ -50,7 +50,7 @@ export const updateMeSchema = z
     firstName: z.string().trim().min(1).max(60).optional(),
     lastName: z.string().trim().min(1).max(60).optional(),
     phone: z.string().trim().max(30).optional(),
-    language: z.enum(['fr', 'en']).optional(),
+    language: z.enum(['fr', 'en', 'wo']).optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Aucune donnee a mettre a jour.',

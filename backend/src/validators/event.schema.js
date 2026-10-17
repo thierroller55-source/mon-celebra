@@ -1,5 +1,10 @@
 import { z } from 'zod';
-import { PLACE_TYPES, CATEGORY_SLUGS, EVENT_VISIBILITY } from '../config/constants.js';
+import {
+  PLACE_TYPES,
+  CATEGORY_SLUGS,
+  EVENT_VISIBILITY,
+  LANGUAGES,
+} from '../config/constants.js';
 import { CATEGORY_FIELDS } from '../config/categoryFields.js';
 
 const hexColor = z
@@ -174,6 +179,7 @@ const baseEventSchema = z.object({
   startTime: z.string().trim().max(10).optional(),
   endTime: z.string().trim().max(10).optional(),
   timezone: z.string().trim().max(60).optional(),
+  language: z.enum(LANGUAGES).optional(),
   location: locationSchema.optional(),
   locations: z.array(locationSchema).max(10).optional(),
   templateId: z

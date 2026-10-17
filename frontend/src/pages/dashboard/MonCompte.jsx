@@ -1,17 +1,18 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useLocale } from '../../context/LocaleContext.jsx';
 import { userService } from '../../services/user.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { authService } from '../../services/auth.service.js';
+import { LANGUAGE_NAMES } from '../../i18n/config.js';
 
 export default function MonCompte() {
   const { user, setUser } = useAuth();
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    email: '',
-  });
+  const { t } = useTranslation();
+  const { locale, setLocale, locales } = useLocale();
+
+  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', email: '' });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -44,9 +45,10 @@ export default function MonCompte() {
         firstName: form.firstName,
         lastName: form.lastName,
         phone: form.phone,
+        language: locale,
       });
       setUser(updated);
-      setSuccess('Profil mis à jour avec succès.');
+      setSuccess(t('account.saved'));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -61,7 +63,7 @@ export default function MonCompte() {
     setSuccess('');
     try {
       await authService.resendVerification();
-      setSuccess('Email de vérification renvoyé.');
+      setSuccess(t('account.verificationSent'));
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -71,7 +73,7 @@ export default function MonCompte() {
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold">Mon compte</h1>
+      <h1 className="mb-6 text-2xl font-bold">{t('account.title')}</h1>
 
       {error && (
         <p role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -87,7 +89,9 @@ export default function MonCompte() {
       <form onSubmit={handleSubmit} className="card space-y-4 p-6">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <label htmlFor="firstName" className="label">Prénom</label>
+            <label htmlFor="firstName" className="label">
+              {t('account.firstName')}
+            </label>
             <input
               id="firstName"
               name="firstName"
@@ -98,7 +102,9 @@ export default function MonCompte() {
             />
           </div>
           <div>
-            <label htmlFor="lastName" className="label">Nom</label>
+            <label htmlFor="lastName" className="label">
+              {t('account.lastName')}
+            </label>
             <input
               id="lastName"
               name="lastName"
@@ -111,7 +117,9 @@ export default function MonCompte() {
         </div>
 
         <div>
-          <label htmlFor="email" className="label">Adresse email</label>
+          <label htmlFor="email" className="label">
+            {t('account.email')}
+          </label>
           <input
             id="email"
             name="email"
@@ -122,7 +130,7 @@ export default function MonCompte() {
             readOnly
           />
           <p className="mt-1 text-xs text-celebra-dark/60">
-            {user?.emailVerified ? 'Email vérifié ✓' : 'Email non vérifié'}
+            {user?.emailVerified ? t('account.emailVerified') : t('account.emailNotVerified')}
             {!user?.emailVerified && (
               <button
                 type="button"
@@ -130,14 +138,16 @@ export default function MonCompte() {
                 disabled={sending}
                 className="ml-2 font-medium text-celebra-gold hover:underline"
               >
-                {sending ? 'Envoi...' : 'Renvoyer le lien de vérification'}
+                {sending ? t('account.sending') : t('account.resendVerification')}
               </button>
             )}
           </p>
         </div>
 
         <div>
-          <label htmlFor="phone" className="label">Téléphone</label>
+          <label htmlFor="phone" className="label">
+            {t('account.phone')}
+          </label>
           <input
             id="phone"
             name="phone"
@@ -148,12 +158,31 @@ export default function MonCompte() {
           />
         </div>
 
+        <div>
+          <label htmlFor="language" className="label">
+            {t('account.language')}
+          </label>
+          <select
+            id="language"
+            className="input"
+            value={locale}
+            onChange={(e) => setLocale(e.target.value)}
+          >
+            {locales.map((code) => (
+              <option key={code} value={code} lang={code}>
+                {LANGUAGE_NAMES[code]}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-celebra-dark/60">{t('account.languageHint')}</p>
+        </div>
+
         <div className="flex gap-3">
           <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? 'Enregistrement...' : 'Enregistrer'}
+            {saving ? t('editor.submitting') : t('common.save')}
           </button>
           <a href="/mot-de-passe-oublie" className="btn-outline">
-            Changer mon mot de passe
+            {t('account.changePassword')}
           </a>
         </div>
       </form>

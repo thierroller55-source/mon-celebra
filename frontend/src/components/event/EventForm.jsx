@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, ImagePlus, X, LocateFixed, Link2, Loader } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import CategoryForm from '../form/CategoryForm.jsx';
 import MapPicker from '../map/MapPicker.jsx';
 import AddressSearch from '../map/AddressSearch.jsx';
@@ -7,6 +8,7 @@ import { PLACE_TYPES } from '../../utils/constants.js';
 import { geoService } from '../../services/geo.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { parseGoogleMapsUrl, isShortMapsLink, isValidLatLng } from '../../lib/geo.js';
+import { LOCALES, LANGUAGE_NAMES } from '../../i18n/config.js';
 
 function toDateInput(value) {
   if (!value) return '';
@@ -26,7 +28,8 @@ function buildInitial(categorySlug, event = null) {
     date: toDateInput(event?.date),
     startTime: event?.startTime || '',
     endTime: event?.endTime || '',
-    locationLabel: location.label || 'Ceremonie',
+    language: event?.language || 'fr',
+    locationLabel: location.label || '',
     locationType: location.type || 'salle_reception',
     locationName: location.name || '',
     locationAddress: location.address || '',
@@ -40,19 +43,20 @@ function buildInitial(categorySlug, event = null) {
   };
 }
 
+function Field({ htmlFor, label, hint, children }) {
+  return (
+    <div>
+      <label htmlFor={htmlFor} className="label">
+        {label}
+      </label>
+      {children}
+      {hint && <p className="mt-1 text-xs text-celebra-dark/50">{hint}</p>}
+    </div>
+  );
+}
+
 /**
  * Formulaire evenement unifie (creation + edition).
- *
- * @param {object} props
- * @param {object} props.category     Categorie (fieldsSchema).
- * @param {object|null} props.event   Evenement existant (mode edition).
- * @param {boolean} props.mode        'create' | 'edit'
- * @param {boolean} props.submitting
- * @param {string} props.error
- * @param {object} props.fieldErrors  Erreurs de champs details.
- * @param {(payload:object, meta:{files:File[],publishNow:boolean})=>void} props.onSubmit
- * @param {()=>void} props.onCancel
- * @param {string} props.submitLabel
  */
 export default function EventForm({
   category,
@@ -65,6 +69,7 @@ export default function EventForm({
   onCancel,
   submitLabel,
 }) {
+  const { t } = useTranslation();
   const categorySlug = category?.slug;
   const [form, setForm] = useState(() => buildInitial(categorySlug, event));
   const [details, setDetails] = useState(() => event?.details || {});
@@ -84,6 +89,8 @@ export default function EventForm({
     setPosterFile(null);
     setPosterPreview(event?.mainImage?.url || '');
     setRemovePoster(false);
+    setLinkValue('');
+    setLocationNote('');
   }, [categorySlug, event]);
 
   useEffect(
@@ -106,7 +113,7 @@ export default function EventForm({
 
   const handleGeolocate = () => {
     if (!navigator.geolocation) {
-      setLocationNote("La geolocalisation n'est pas disponible sur cet appareil.");
+      setLocationNote(t('editor.geoUnavailable'));
       return;
     }
     setGeoBusy(true);
@@ -119,14 +126,12 @@ export default function EventForm({
           longitude: pos.coords.longitude.toFixed(6),
         }));
         setGeoBusy(false);
-        setLocationNote('Position actuelle selectionnee. Ajustez-la si besoin.');
+        setLocationNote(t('editor.geoSelected'));
       },
       (err) => {
         setGeoBusy(false);
         setLocationNote(
-          err.code === err.PERMISSION_DENIED
-            ? 'Acces refuse : autorisez la localisation dans votre navigateur.'
-            : "Impossible d'obtenir votre position.",
+          err.code === err.PERMISSION_DENIED ? t('editor.geoDenied') : t('editor.geoError'),
         );
       },
       { enableHighAccuracy: true, timeout: 10000 },
@@ -141,11 +146,11 @@ export default function EventForm({
     if (direct) {
       handlePickLocation(direct.lat, direct.lng);
       setLinkValue('');
-      setLocationNote('Position extraite du lien Google Maps.');
+      setLocationNote(t('editor.linkExtracted'));
       return;
     }
     if (!isShortMapsLink(value)) {
-      setLocationNote('Lien Google Maps non reconnu.');
+      setLocationNote(t('editor.linkUnknown'));
       return;
     }
     setLinkBusy(true);
@@ -153,7 +158,7 @@ export default function EventForm({
       const coords = await geoService.resolveLink(value);
       handlePickLocation(coords.lat, coords.lng);
       setLinkValue('');
-      setLocationNote('Position extraite du lien Google Maps.');
+      setLocationNote(t('editor.linkExtracted'));
     } catch (err) {
       setLocationNote(getErrorMessage(err));
     } finally {
@@ -189,6 +194,7 @@ export default function EventForm({
       category: form.category,
       title: form.title.trim(),
       visibility: form.visibility,
+      language: form.language,
       design: {
         primaryColor: form.primaryColor,
         secondaryColor: form.secondaryColor,
@@ -233,11 +239,8 @@ export default function EventForm({
       )}
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Affiche de l&apos;evenement</h2>
-        <p className="text-sm text-celebra-dark/60">
-          Importez votre affiche (affiche, flyer, faire-part). Elle sera affichee telle quelle
-          a vos invites. Formats acceptes : JPEG, PNG ou WebP (max 8 Mo).
-        </p>
+        <h2 className="font-semibold">{t('editor.posterTitle')}</h2>
+        <p className="text-sm text-celebra-dark/60">{t('editor.posterHint')}</p>
 
         <input
           id="poster"
@@ -249,12 +252,16 @@ export default function EventForm({
 
         {posterPreview ? (
           <div className="relative overflow-hidden rounded-xl border border-celebra-dark/15">
-            <img src={posterPreview} alt="Affiche" className="max-h-96 w-full object-contain" />
+            <img
+              src={posterPreview}
+              alt={t('editor.posterAlt')}
+              className="max-h-96 w-full object-contain"
+            />
             <div className="absolute right-2 top-2 flex gap-2">
               <label
                 htmlFor="poster"
                 className="cursor-pointer rounded-lg bg-white/90 p-1.5 text-celebra-dark shadow hover:bg-white"
-                aria-label="Remplacer l'affiche"
+                aria-label={t('editor.posterReplace')}
               >
                 <ImagePlus size={16} />
               </label>
@@ -262,7 +269,7 @@ export default function EventForm({
                 type="button"
                 className="rounded-lg bg-white/90 p-1.5 text-red-600 shadow hover:bg-white"
                 onClick={clearPoster}
-                aria-label="Supprimer l'affiche"
+                aria-label={t('editor.posterRemove')}
               >
                 <X size={16} />
               </button>
@@ -274,31 +281,29 @@ export default function EventForm({
             className="flex cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-celebra-dark/20 px-4 py-10 text-center text-sm text-celebra-dark/60 hover:border-celebra-gold"
           >
             <ImagePlus size={24} />
-            <span className="font-medium text-celebra-dark">Importer votre affiche</span>
-            <span>JPEG, PNG ou WebP - 8 Mo max</span>
+            <span className="font-medium text-celebra-dark">{t('editor.posterImport')}</span>
+            <span>{t('editor.posterFormats')}</span>
           </label>
         )}
       </section>
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Evenement</h2>
+        <h2 className="font-semibold">{t('editor.eventSection')}</h2>
 
-        <div>
-          <label htmlFor="title" className="label">Titre *</label>
+        <Field htmlFor="title" label={`${t('editor.title')} *`}>
           <input
             id="title"
             name="title"
             className="input"
-            placeholder="Titre de l'evenement"
+            placeholder={t('editor.titlePlaceholder')}
             value={form.title}
             onChange={handleChange}
             required
           />
-        </div>
+        </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="date" className="label">Date</label>
+          <Field htmlFor="date" label={t('editor.date')}>
             <input
               id="date"
               name="date"
@@ -307,9 +312,8 @@ export default function EventForm({
               value={form.date}
               onChange={handleChange}
             />
-          </div>
-          <div>
-            <label htmlFor="tagline" className="label">Sous-titre</label>
+          </Field>
+          <Field htmlFor="tagline" label={t('editor.tagline')}>
             <input
               id="tagline"
               name="tagline"
@@ -317,23 +321,21 @@ export default function EventForm({
               value={form.tagline}
               onChange={handleChange}
             />
-          </div>
+          </Field>
         </div>
 
-        <div>
-          <label htmlFor="description" className="label">Description</label>
+        <Field htmlFor="description" label={t('editor.description')}>
           <textarea
             id="description"
             name="description"
-            className="input min-h-[100px]"
+            className="input"
             value={form.description}
             onChange={handleChange}
           />
-        </div>
+        </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="startTime" className="label">Heure de debut</label>
+          <Field htmlFor="startTime" label={t('editor.startTime')}>
             <input
               id="startTime"
               name="startTime"
@@ -342,9 +344,8 @@ export default function EventForm({
               value={form.startTime}
               onChange={handleChange}
             />
-          </div>
-          <div>
-            <label htmlFor="endTime" className="label">Heure de fin</label>
+          </Field>
+          <Field htmlFor="endTime" label={t('editor.endTime')}>
             <input
               id="endTime"
               name="endTime"
@@ -353,8 +354,28 @@ export default function EventForm({
               value={form.endTime}
               onChange={handleChange}
             />
-          </div>
+          </Field>
         </div>
+
+        <Field
+          htmlFor="language"
+          label={t('editor.eventLanguage')}
+          hint={t('editor.eventLanguageHint')}
+        >
+          <select
+            id="language"
+            name="language"
+            className="input"
+            value={form.language}
+            onChange={handleChange}
+          >
+            {LOCALES.map((code) => (
+              <option key={code} value={code} lang={code}>
+                {LANGUAGE_NAMES[code]}
+              </option>
+            ))}
+          </select>
+        </Field>
       </section>
 
       <CategoryForm
@@ -365,11 +386,10 @@ export default function EventForm({
       />
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Lieu</h2>
+        <h2 className="font-semibold">{t('editor.placeSection')}</h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="locationLabel" className="label">Intitule</label>
+          <Field htmlFor="locationLabel" label={t('editor.locationLabel')}>
             <input
               id="locationLabel"
               name="locationLabel"
@@ -377,9 +397,8 @@ export default function EventForm({
               value={form.locationLabel}
               onChange={handleChange}
             />
-          </div>
-          <div>
-            <label htmlFor="locationType" className="label">Type de lieu</label>
+          </Field>
+          <Field htmlFor="locationType" label={t('editor.locationType')}>
             <select
               id="locationType"
               name="locationType"
@@ -387,17 +406,16 @@ export default function EventForm({
               value={form.locationType}
               onChange={handleChange}
             >
-              {PLACE_TYPES.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
+              {PLACE_TYPES.map((type) => (
+                <option key={type.value} value={type.value}>
+                  {type.label}
                 </option>
               ))}
             </select>
-          </div>
+          </Field>
         </div>
 
-        <div>
-          <label htmlFor="locationName" className="label">Nom du lieu</label>
+        <Field htmlFor="locationName" label={t('editor.locationName')}>
           <input
             id="locationName"
             name="locationName"
@@ -405,10 +423,10 @@ export default function EventForm({
             value={form.locationName}
             onChange={handleChange}
           />
-        </div>
+        </Field>
 
         <div>
-          <p className="label mb-1">Rechercher une adresse</p>
+          <p className="label mb-1">{t('editor.searchAddress')}</p>
           <AddressSearch
             onSelect={({ address, lat, lng }) => {
               setLocationNote('');
@@ -423,15 +441,13 @@ export default function EventForm({
         </div>
 
         <div>
-          <p className="label">Position sur la carte</p>
+          <p className="label">{t('editor.mapPosition')}</p>
           <MapPicker
             latitude={form.latitude}
             longitude={form.longitude}
             onChange={handlePickLocation}
           />
-          <p className="mt-1 text-xs text-celebra-dark/50">
-            Cliquez sur la carte ou faites glisser le marqueur pour ajuster la position.
-          </p>
+          <p className="mt-1 text-xs text-celebra-dark/50">{t('editor.mapHint')}</p>
         </div>
 
         <div>
@@ -442,19 +458,18 @@ export default function EventForm({
             disabled={geoBusy}
           >
             {geoBusy ? <Loader className="animate-spin" size={15} /> : <LocateFixed size={15} />}
-            Ma position actuelle
+            {t('editor.currentPosition')}
           </button>
         </div>
 
-        <div>
-          <label htmlFor="mapsLink" className="label">Coller un lien Google Maps</label>
+        <Field htmlFor="mapsLink" label={t('editor.pasteLink')}>
           <div className="flex gap-2">
             <input
               id="mapsLink"
               className="input"
               value={linkValue}
               onChange={(e) => setLinkValue(e.target.value)}
-              placeholder="https://maps.app.goo.gl/... ou .../@14.767,-17.397,15z"
+              placeholder={t('editor.linkPlaceholder')}
             />
             <button
               type="button"
@@ -463,17 +478,14 @@ export default function EventForm({
               disabled={linkBusy || !linkValue.trim()}
             >
               {linkBusy ? <Loader className="animate-spin" size={15} /> : <Link2 size={15} />}
-              Utiliser
+              {t('editor.useLink')}
             </button>
           </div>
-        </div>
+        </Field>
 
-        {locationNote && (
-          <p className="text-sm text-celebra-dark/70">{locationNote}</p>
-        )}
+        {locationNote && <p className="text-sm text-celebra-dark/70">{locationNote}</p>}
 
-        <div>
-          <label htmlFor="locationAddress" className="label">Adresse</label>
+        <Field htmlFor="locationAddress" label={t('editor.address')}>
           <input
             id="locationAddress"
             name="locationAddress"
@@ -481,11 +493,10 @@ export default function EventForm({
             value={form.locationAddress}
             onChange={handleChange}
           />
-        </div>
+        </Field>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="latitude" className="label">Latitude</label>
+          <Field htmlFor="latitude" label={t('editor.latitude')}>
             <input
               id="latitude"
               name="latitude"
@@ -497,9 +508,8 @@ export default function EventForm({
               value={form.latitude}
               onChange={handleChange}
             />
-          </div>
-          <div>
-            <label htmlFor="longitude" className="label">Longitude</label>
+          </Field>
+          <Field htmlFor="longitude" label={t('editor.longitude')}>
             <input
               id="longitude"
               name="longitude"
@@ -511,17 +521,17 @@ export default function EventForm({
               value={form.longitude}
               onChange={handleChange}
             />
-          </div>
+          </Field>
         </div>
       </section>
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Galerie</h2>
+        <h2 className="font-semibold">{t('editor.gallerySection')}</h2>
 
         {mode === 'create' ? (
           <div>
             <label htmlFor="photos" className="label">
-              Photos (max 20, 3 Mo par image)
+              {t('editor.photos')}
             </label>
             <input
               id="photos"
@@ -533,22 +543,19 @@ export default function EventForm({
             />
             {files.length > 0 && (
               <p className="mt-1 text-xs text-celebra-dark/50">
-                {files.length} photo(s) selectionnee(s)
+                {t('editor.photosCount', { count: files.length })}
               </p>
             )}
           </div>
         ) : (
-          <p className="text-sm text-celebra-dark/50">
-            La galerie se gere depuis la page de gestion de l&apos;evenement.
-          </p>
+          <p className="text-sm text-celebra-dark/50">{t('editor.galleryHint')}</p>
         )}
       </section>
 
       <section className="card space-y-4 p-6">
-        <h2 className="font-semibold">Publication</h2>
+        <h2 className="font-semibold">{t('editor.publicationSection')}</h2>
 
-        <div>
-          <label htmlFor="visibility" className="label">Confidentialite</label>
+        <Field htmlFor="visibility" label={t('editor.visibility')}>
           <select
             id="visibility"
             name="visibility"
@@ -556,15 +563,14 @@ export default function EventForm({
             value={form.visibility}
             onChange={handleChange}
           >
-            <option value="public">Public</option>
-            <option value="private">Prive (lien direct)</option>
-            <option value="password">Protege par mot de passe</option>
+            <option value="public">{t('editor.visibilityPublic')}</option>
+            <option value="private">{t('editor.visibilityPrivate')}</option>
+            <option value="password">{t('editor.visibilityPassword')}</option>
           </select>
-        </div>
+        </Field>
 
         {form.visibility === 'password' && (
-          <div>
-            <label htmlFor="accessCode" className="label">Code d&apos;acces</label>
+          <Field htmlFor="accessCode" label={t('editor.accessCode')}>
             <input
               id="accessCode"
               name="accessCode"
@@ -572,7 +578,7 @@ export default function EventForm({
               value={form.accessCode}
               onChange={handleChange}
             />
-          </div>
+          </Field>
         )}
 
         {mode === 'create' && (
@@ -582,18 +588,18 @@ export default function EventForm({
               checked={form.publishNow}
               onChange={(e) => setForm((f) => ({ ...f, publishNow: e.target.checked }))}
             />
-            Publier immediatement
+            {t('editor.publishNow')}
           </label>
         )}
       </section>
 
       <div className="flex justify-end gap-3">
         <button type="button" className="btn-outline" onClick={onCancel} disabled={submitting}>
-          Annuler
+          {t('editor.cancel')}
         </button>
         <button type="submit" className="btn-primary" disabled={submitting}>
           {submitting && <Loader2 className="animate-spin" size={16} />}
-          {submitting ? 'Enregistrement...' : submitLabel || "Creer l'evenement"}
+          {submitting ? t('editor.submitting') : submitLabel || t('editor.submitCreate')}
         </button>
       </div>
     </form>

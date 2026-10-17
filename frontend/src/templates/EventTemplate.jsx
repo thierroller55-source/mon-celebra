@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Calendar, MapPin, Clock, Navigation, Copy, Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Countdown from '../components/event/Countdown.jsx';
 import RsvpSection from '../components/event/RsvpSection.jsx';
 import GuestbookSection from '../components/event/GuestbookSection.jsx';
@@ -7,6 +8,8 @@ import ReportButton from '../components/event/ReportButton.jsx';
 import MapView from '../components/map/MapView.jsx';
 import DetailsRenderer from './DetailsRenderer.jsx';
 import { googleMapsDirUrl, googleMapsSearchUrl, wazeUrl } from '../lib/geo.js';
+import { formatDate } from '../lib/date.js';
+import { useLocale } from '../context/LocaleContext.jsx';
 
 const VARIANTS = {
   classic: {
@@ -56,16 +59,6 @@ const VARIANTS = {
   },
 };
 
-function formatDate(value) {
-  if (!value) return '';
-  return new Date(value).toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
 function locationMapsUrl(location, mode = 'search') {
   return mode === 'dir'
     ? googleMapsDirUrl(location.latitude, location.longitude)
@@ -73,6 +66,7 @@ function locationMapsUrl(location, mode = 'search') {
 }
 
 function CopyAddressButton({ location }) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
   const text = location.address || `${location.name || location.label || ''} (${location.latitude}, ${location.longitude})`;
   const handleCopy = async () => {
@@ -87,7 +81,7 @@ function CopyAddressButton({ location }) {
   return (
     <button type="button" className="btn-outline w-full" onClick={handleCopy}>
       {copied ? <Check size={16} /> : <Copy size={16} />}
-      {copied ? 'Adresse copiee' : "Copier l'adresse"}
+      {copied ? t('publicPage.addressCopied') : t('publicPage.copyAddress')}
     </button>
   );
 }
@@ -107,6 +101,8 @@ function calendarUrl(slug, accessCode) {
  * @param {string} props.variant        'classic' | 'modern' | 'bold' | 'elegant' | 'minimal'
  */
 export default function EventTemplate({ event, category = null, variant = 'classic', accessCode = '' }) {
+  const { t } = useTranslation();
+  const { locale } = useLocale();
   const style = VARIANTS[variant] || VARIANTS.classic;
   const design = event.design || {};
   const primary = design.primaryColor || '#B08D57';
@@ -127,7 +123,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
         <div className="flex justify-center bg-celebra-dark/5">
           <img
             src={event.mainImage.url}
-            alt={headline || 'Affiche de l\'evenement'}
+            alt={headline || t('publicPage.posterAlt')}
             className="max-h-[80vh] w-full object-contain"
           />
         </div>
@@ -149,7 +145,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
             }`}
           >
             <Calendar size={16} />
-            {formatDate(event.date)}
+            {formatDate(event.date, { locale, withWeekday: true })}
             {event.startTime && ` · ${event.startTime}`}
           </p>
         )}
@@ -164,7 +160,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
               }`}
             >
               <Calendar size={16} />
-              Ajouter a l&apos;agenda
+              {t('publicPage.addToCalendar')}
             </a>
           </div>
         )}
@@ -187,7 +183,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
 
         {event.program?.length > 0 && (
           <section className="mb-12">
-            <h2 className={style.sectionTitle}>Programme</h2>
+            <h2 className={style.sectionTitle}>{t('publicPage.program')}</h2>
             <ol className="space-y-4">
               {event.program.map((item, index) => (
                 <li key={index} className="card flex items-start gap-4 p-4">
@@ -214,7 +210,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
 
         {locations.length > 0 && (
           <section className="mb-12">
-            <h2 className={style.sectionTitle}>Lieu</h2>
+            <h2 className={style.sectionTitle}>{t('publicPage.location')}</h2>
             <div className="grid gap-4 sm:grid-cols-2">
               {locations.map((loc, index) => (
                 <div key={index} className="card flex flex-col gap-3 p-5">
@@ -242,7 +238,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
                           className="btn-outline w-full"
                         >
                           <Navigation size={16} />
-                          Itineraire
+                          {t('publicPage.itinerary')}
                         </a>
                         <a
                           href={wazeUrl(loc.latitude, loc.longitude)}
@@ -267,13 +263,13 @@ export default function EventTemplate({ event, category = null, variant = 'class
 
         {event.gallery?.length > 0 && (
           <section className="mb-12">
-            <h2 className={style.sectionTitle}>Galerie</h2>
+            <h2 className={style.sectionTitle}>{t('publicPage.gallery')}</h2>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
               {event.gallery.map((photo, index) => (
                 <img
                   key={index}
                   src={photo.url}
-                  alt={photo.caption || `Photo ${index + 1}`}
+                  alt={photo.caption || t('publicPage.photoAlt', { index: index + 1 })}
                   className="aspect-square w-full rounded-xl object-cover"
                   loading="lazy"
                 />

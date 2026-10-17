@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Eye, Trash2, Upload, Link2, Loader2, Settings2, Pencil } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.js';
+import { useLocale, useLocalePath } from '../../context/LocaleContext.jsx';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage } from '../../services/api.js';
-import { EVENT_STATUS_LABELS } from '../../utils/constants.js';
-import PosterDownload from '../../components/event/PosterDownload.jsx';
+import { formatDate } from '../../lib/date.js';
 
-function formatDate(value) {
-  if (!value) return 'Date a definir';
-  return new Date(value).toLocaleDateString('fr-FR', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
+const STATUS_CLASS = {
+  published: 'bg-green-50 text-green-700',
+  archived: 'bg-amber-50 text-amber-700',
+  draft: 'bg-celebra-dark/5 text-celebra-dark/60',
+};
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { t } = useTranslation();
+  const { locale } = useLocale();
+  const lp = useLocalePath();
+
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -27,9 +29,15 @@ export default function Dashboard() {
     let active = true;
     eventService
       .list()
-      .then((data) => active && setEvents(data))
-      .catch((err) => active && setError(getErrorMessage(err)))
-      .finally(() => active && setLoading(false));
+      .then((data) => {
+        if (active) setEvents(data);
+      })
+      .catch((err) => {
+        if (active) setError(getErrorMessage(err));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
     return () => {
       active = false;
     };
@@ -81,7 +89,7 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (event) => {
-    if (!window.confirm(`Supprimer "${event.title}" ? Cette action est definitive.`)) return;
+    if (!window.confirm(t('dashboard.deleteConfirm', { title: event.title }))) return;
     setBusyId(event._id);
     try {
       await eventService.remove(event._id);
@@ -101,14 +109,14 @@ export default function Dashboard() {
     <div className="mx-auto w-full max-w-5xl">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold">Mes evenements</h1>
+          <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
           <p className="text-sm text-celebra-dark/60">
-            Gerez vos invitations et suivez vos invites, {user?.firstName}.
+            {t('dashboard.subtitle', { name: user?.firstName || '' })}
           </p>
         </div>
-        <Link to="/dashboard/creer" className="btn-primary">
+        <Link to={lp('/dashboard/creer')} className="btn-primary">
           <Plus size={16} />
-          Creer un evenement
+          {t('dashboard.create')}
         </Link>
       </div>
 
@@ -121,13 +129,13 @@ export default function Dashboard() {
       {loading ? (
         <div className="flex items-center justify-center gap-2 py-16 text-celebra-dark/60">
           <Loader2 className="animate-spin" size={20} />
-          Chargement...
+          {t('common.loading')}
         </div>
       ) : events.length === 0 ? (
         <div className="card flex flex-col items-center gap-3 p-10 text-center">
-          <p className="text-celebra-dark/70">Vous n&apos;avez pas encore d&apos;evenement.</p>
-          <Link to="/dashboard/creer" className="btn-primary">
-            Creer mon premier evenement
+          <p className="text-celebra-dark/70">{t('dashboard.empty')}</p>
+          <Link to={lp('/dashboard/creer')} className="btn-primary">
+            {t('dashboard.emptyCta')}
           </Link>
         </div>
       ) : (
@@ -135,20 +143,26 @@ export default function Dashboard() {
           {events.map((event) => (
             <article key={event._id} className="card flex flex-col overflow-hidden">
               <div className="p-4">
-                {event.mainImage?.url ? (
-                  <PosterDownload event={event} />
-                ) : (
-                  <div
-                    className="flex h-40 items-center justify-center rounded-lg text-sm text-white/90"
-                    style={{
-                      background: `linear-gradient(135deg, ${
-                        event.design?.primaryColor || '#B08D57'
-                      }, ${event.design?.secondaryColor || '#1F2937'})`,
-                    }}
-                  >
-                    Aucune affiche importee
-                  </div>
-                )}
+                <div className="flex h-40 items-center justify-center overflow-hidden rounded-lg text-sm text-white/90">
+                  {event.mainImage?.url ? (
+                    <img
+                      src={event.mainImage.url}
+                      alt={event.title}
+                      className="max-h-40 w-full object-contain"
+                    />
+                  ) : (
+                    <span
+                      className="flex h-full w-full items-center justify-center px-3 text-center"
+                      style={{
+                        background: `linear-gradient(135deg, ${
+                          event.design?.primaryColor || '#B08D57'
+                        }, ${event.design?.secondaryColor || '#1F2937'})`,
+                      }}
+                    >
+                      {t('dashboard.noPoster')}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-1 flex-col gap-3 px-4 pb-4">
@@ -161,36 +175,32 @@ export default function Dashboard() {
                   </div>
                   <span
                     className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
-                      event.status === 'published'
-                        ? 'bg-green-50 text-green-700'
-                        : event.status === 'archived'
-                        ? 'bg-amber-50 text-amber-700'
-                        : 'bg-celebra-dark/5 text-celebra-dark/60'
+                      STATUS_CLASS[event.status] || STATUS_CLASS.draft
                     }`}
                   >
-                    {EVENT_STATUS_LABELS[event.status] || event.status}
+                    {t(`dashboard.status.${event.status}`, { defaultValue: event.status })}
                   </span>
                 </div>
 
-                <p className="text-sm text-celebra-dark/60">{formatDate(event.date)}</p>
+                <p className="text-sm text-celebra-dark/60">{formatDate(event.date, { locale })}</p>
 
                 <div className="mt-auto flex flex-wrap gap-2">
-                  <Link to={`/dashboard/evenements/${event._id}`} className="btn-outline">
+                  <Link to={lp(`/dashboard/evenements/${event._id}`)} className="btn-outline">
                     <Settings2 size={15} />
-                    Gerer
+                    {t('common.manage')}
                   </Link>
-                  <Link to={`/dashboard/evenements/${event._id}/editer`} className="btn-outline">
+                  <Link to={lp(`/dashboard/evenements/${event._id}/editer`)} className="btn-outline">
                     <Pencil size={15} />
-                    Modifier
+                    {t('common.edit')}
                   </Link>
-                  <Link to={`/dashboard/evenements/${event._id}/apercu`} className="btn-outline">
+                  <Link to={lp(`/dashboard/evenements/${event._id}/apercu`)} className="btn-outline">
                     <Eye size={15} />
-                    Apercu
+                    {t('common.preview')}
                   </Link>
                   {event.status === 'published' && (
-                    <Link to={`/e/${event.slug}`} className="btn-outline">
+                    <Link to={lp(`/e/${event.slug}`)} className="btn-outline">
                       <Eye size={15} />
-                      Voir
+                      {t('common.view')}
                     </Link>
                   )}
                   <button
@@ -200,7 +210,7 @@ export default function Dashboard() {
                     onClick={() => handleTogglePublish(event)}
                   >
                     <Upload size={15} />
-                    {event.status === 'published' ? 'Depublier' : 'Publier'}
+                    {event.status === 'published' ? t('dashboard.unpublish') : t('dashboard.publish')}
                   </button>
                   <button
                     type="button"
@@ -208,7 +218,7 @@ export default function Dashboard() {
                     disabled={busyId === event._id}
                     onClick={() => handleDuplicate(event)}
                   >
-                    Dupliquer
+                    {t('dashboard.duplicate')}
                   </button>
                   <button
                     type="button"
@@ -216,13 +226,13 @@ export default function Dashboard() {
                     disabled={busyId === event._id}
                     onClick={() => handleArchiveToggle(event)}
                   >
-                    {event.status === 'archived' ? 'Restaurer' : 'Archiver'}
+                    {event.status === 'archived' ? t('dashboard.restore') : t('dashboard.archive')}
                   </button>
                   <button
                     type="button"
                     className="btn-outline"
                     onClick={() => handleCopyLink(event)}
-                    title="Copier le lien"
+                    title={t('dashboard.copyLinkTitle')}
                   >
                     <Link2 size={15} />
                   </button>
@@ -231,7 +241,7 @@ export default function Dashboard() {
                     className="btn-outline text-red-600"
                     disabled={busyId === event._id}
                     onClick={() => handleDelete(event)}
-                    title="Supprimer"
+                    title={t('common.delete')}
                   >
                     <Trash2 size={15} />
                   </button>

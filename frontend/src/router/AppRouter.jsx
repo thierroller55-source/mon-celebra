@@ -1,10 +1,11 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, Outlet, useParams } from 'react-router-dom';
 
 import PublicLayout from '../layouts/PublicLayout.jsx';
 import DashboardLayout from '../layouts/DashboardLayout.jsx';
 import AdminLayout from '../layouts/AdminLayout.jsx';
 import ClientRoute from './ClientRoute.jsx';
 import AdminRoute from './AdminRoute.jsx';
+import { isLocale } from '../i18n/config.js';
 
 import Home from '../pages/Home.jsx';
 import Login from '../pages/auth/Login.jsx';
@@ -36,9 +37,20 @@ import AdminCategories from '../pages/admin/AdminCategories.jsx';
 import AdminTemplates from '../pages/admin/AdminTemplates.jsx';
 import MonCompte from '../pages/dashboard/MonCompte.jsx';
 
-export default function AppRouter() {
+/** Garde de locale : n'accepte que fr | en | wo, sinon redirige vers la racine. */
+function LocaleLayout() {
+  const { locale } = useParams();
+  if (!isLocale(locale)) return <Navigate to="/" replace />;
+  return <Outlet />;
+}
+
+/**
+ * Arbre de routes partage : monte a la racine (URLs historiques deja
+ * partagees, QR codes) ET sous /:locale (fr | en | wo).
+ */
+function renderRouteTree() {
   return (
-    <Routes>
+    <>
       <Route element={<PublicLayout />}>
         <Route index element={<Home />} />
         <Route path="categories" element={<ChooseCategory />} />
@@ -79,6 +91,18 @@ export default function AppRouter() {
           <Route path="categories" element={<AdminCategories />} />
           <Route path="templates" element={<AdminTemplates />} />
         </Route>
+      </Route>
+    </>
+  );
+}
+
+export default function AppRouter() {
+  return (
+    <Routes>
+      {renderRouteTree()}
+
+      <Route path=":locale" element={<LocaleLayout />}>
+        {renderRouteTree()}
       </Route>
 
       <Route path="*" element={<NotFound />} />

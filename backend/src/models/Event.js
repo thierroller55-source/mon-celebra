@@ -3,6 +3,7 @@ import {
   EVENT_STATUS,
   EVENT_VISIBILITY,
   DEFAULT_DESIGN,
+  LANGUAGES,
 } from '../config/constants.js';
 import {
   imageSchema,
@@ -63,8 +64,12 @@ const eventSchema = new mongoose.Schema(
     ownerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
-      required: true,
-      index: true,
+      default: null,
+    },
+    language: {
+      type: String,
+      enum: LANGUAGES,
+      default: 'fr',
     },
     category: { type: String, required: true, lowercase: true, trim: true, index: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
