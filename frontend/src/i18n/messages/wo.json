@@ -40,6 +40,7 @@
   "dashboard": {
     "title": "Samay evenman",
     "subtitle": "Saytu sa wone ak seet sa gan, {name}.",
+    "subtitleNoName": "Saytu sa wone ak seet sa gan.",
     "greeting": "Salaamaleekum, {name}",
     "greetingGuest": "Salaamaleekum",
     "create": "Sos evenman",

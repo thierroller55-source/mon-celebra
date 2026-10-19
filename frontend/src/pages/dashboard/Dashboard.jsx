@@ -111,7 +111,9 @@ export default function Dashboard() {
         <div>
           <h1 className="text-2xl font-bold">{t('dashboard.title')}</h1>
           <p className="text-sm text-celebra-dark/60">
-            {t('dashboard.subtitle', { name: user?.firstName || '' })}
+            {user?.firstName
+              ? t('dashboard.subtitle', { name: user.firstName })
+              : t('dashboard.subtitleNoName')}
           </p>
         </div>
         <Link to={lp('/dashboard/creer')} className="btn-primary">

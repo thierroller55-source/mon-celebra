@@ -40,6 +40,7 @@
   "dashboard": {
     "title": "Mes événements",
     "subtitle": "Gérez vos invitations et suivez vos invités, {name}.",
+    "subtitleNoName": "Gérez vos invitations et suivez vos invités.",
     "greeting": "Bonjour {name}",
     "greetingGuest": "Bonjour",
     "create": "Créer un événement",
