@@ -32,3 +32,8 @@ coverage/
 .vite/
 .vercel
 .env*
+
+# Playwright
+test-results/
+playwright-report/
+tests/e2e/responsive-report.*.json

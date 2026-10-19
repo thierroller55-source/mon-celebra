@@ -1,9 +1,14 @@
 import rateLimit from 'express-rate-limit';
+import { env } from '../config/env.js';
 
 function makeLimiter({ windowMs, max, message }) {
+  // En developpement et test, on ne limite pas : sinon les tests automatises
+  // (Playwright, node --test) declenchent des 429 et deviennent instables.
+  const isDev = env.NODE_ENV === 'development' || env.NODE_ENV === 'test';
   return rateLimit({
     windowMs,
     max,
+    skip: () => isDev,
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => {

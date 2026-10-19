@@ -1,9 +1,17 @@
 import { test } from '@playwright/test';
 import fs from 'node:fs';
 
-// DIAGNOSTIC (Etape 0 / B2). N'echoue pas : il liste les elements qui
-// depassent de l'ecran. On l'execute via: npx playwright test responsive-audit
-// Resultat: tests/e2e/responsive-report.json
+// DIAGNOSTIC RESPONSIVE (Etape 0 / B2). Liste les elements qui depassent de
+// l'ecran sur toutes les routes, tous les viewports, en clair et en sombre.
+// N'echoue pas : ecrit un rapport JSON + un tableau lisible.
+//
+//   BASE_URL=http://localhost:5173 npx playwright test responsive-audit --project=chromium
+//
+// Teste aussi les routes authentifiees si DEMO_EMAIL/DEMO_PASSWORD sont fournis.
+
+const BASE = process.env.BASE_URL || 'http://localhost:5173';
+const DEMO_EMAIL = process.env.DEMO_EMAIL || '';
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || '';
 
 const VIEWPORTS = [
   { w: 320, h: 568, name: '320' },
@@ -24,47 +32,55 @@ const VIEWPORTS = [
   { w: 1024, h: 768, name: '1024' },
 ];
 
-// Routes testables sans authentification.
-const ROUTES = [
+const PUBLIC_ROUTES = [
   { path: '/', name: 'home' },
   { path: '/e/mariage-2', name: 'event-public' },
+  { path: '/fr/e/mariage-2', name: 'event-public-fr' },
   { path: '/categories', name: 'categories' },
   { path: '/connexion', name: 'login' },
   { path: '/inscription', name: 'register' },
   { path: '/mot-de-passe-oublie', name: 'forgot' },
-  { path: '/fr/e/mariage-2', name: 'event-public-fr' },
   { path: '/page-inexistante-xyz', name: 'notfound' },
 ];
+
+const AUTH_ROUTES = [
+  { path: '/dashboard', name: 'dashboard' },
+  { path: '/dashboard/creer', name: 'create' },
+  { path: '/dashboard/compte', name: 'account' },
+  { path: '/dashboard/evenements/:id', name: 'event-manage', dynamic: true },
+];
+
+const ALL_ROUTES = [...PUBLIC_ROUTES, ...AUTH_ROUTES];
 
 const AUDIT = `(() => {
   const vw = window.innerWidth;
   const doc = document.documentElement;
   const offenders = [];
-  const all = document.querySelectorAll('*');
-  for (const el of all) {
+  for (const el of document.querySelectorAll('*')) {
     const r = el.getBoundingClientRect();
     if (r.width === 0 && r.height === 0) continue;
     const style = getComputedStyle(el);
     if (style.position === 'fixed' || style.visibility === 'hidden') continue;
+    // On ignore les tuiles Leaflet : Leaflet positionne des tuiles de 256px
+    // qui depassent volontairement mais sont clippees par .leaflet-container.
+    if (el.classList.contains('leaflet-tile') || el.closest('.leaflet-tile-pane')) continue;
     if (r.right > vw + 1 || r.left < -1) {
-      const path = (() => {
-        let n = el, parts = [];
-        while (n && n.nodeType === 1 && parts.length < 4) {
-          const id = n.id ? '#' + n.id : '';
-          const cls = n.className && typeof n.className === 'string'
-            ? '.' + n.className.trim().split(/\\s+/).slice(0, 3).join('.')
-            : '';
-          parts.unshift(n.tagName.toLowerCase() + id + cls);
-          n = n.parentElement;
-        }
-        return parts.join(' > ');
-      })();
+      let n = el, parts = [];
+      while (n && n.nodeType === 1 && parts.length < 4) {
+        const id = n.id ? '#' + n.id : '';
+        const cls = n.className && typeof n.className === 'string'
+          ? '.' + n.className.trim().split(/\\s+/).slice(0, 3).join('.')
+          : '';
+        parts.unshift(n.tagName.toLowerCase() + id + cls);
+        n = n.parentElement;
+      }
       offenders.push({
-        path,
+        path: parts.join(' > '),
         left: Math.round(r.left),
         right: Math.round(r.right),
         width: Math.round(r.width),
         overflowRight: Math.round(r.right - vw),
+        overflowLeft: Math.round(-r.left),
       });
     }
   }
@@ -73,34 +89,68 @@ const AUDIT = `(() => {
     scrollWidth: doc.scrollWidth,
     clientWidth: doc.clientWidth,
     horizontalScroll: doc.scrollWidth > window.innerWidth + 1,
-    offenders: offenders.slice(0, 25),
+    offenders: offenders.slice(0, 20),
   };
 })()`;
 
-test.setTimeout(600000);
+async function login(page) {
+  if (!DEMO_EMAIL || !DEMO_PASSWORD) return false;
+  try {
+    await page.goto('/connexion', { waitUntil: 'domcontentloaded' });
+    await page.fill('input[type="email"]', DEMO_EMAIL);
+    await page.fill('input[type="password"]', DEMO_PASSWORD);
+    await page.click('button[type="submit"]');
+    await page.waitForURL(/dashboard/, { timeout: 15000 });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+test.setTimeout(900000);
 
 test('responsive audit', async ({ page }, testInfo) => {
   const browser = testInfo.project.name;
   const results = [];
 
-  for (const vp of VIEWPORTS) {
-    for (const route of ROUTES) {
-      await page.setViewportSize({ width: vp.w, height: vp.h });
-      try {
-        await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 20000 });
-        await page.waitForTimeout(700);
-      } catch {
-        results.push({ browser, vp: vp.name, route: route.name, error: 'navigation' });
-        continue;
-      }
-      const audit = await page.evaluate(AUDIT);
-      if (audit.horizontalScroll || audit.offenders.length) {
-        results.push({ browser, vp: vp.name, route: route.name, ...audit });
+  for (const theme of ['light', 'dark']) {
+    await page.addInitScript((t) => {
+      localStorage.setItem('celebra-theme', t);
+    }, theme);
+
+    let authed = false;
+    if (DEMO_EMAIL && DEMO_PASSWORD) authed = await login(page);
+
+    const routes = authed ? ALL_ROUTES : PUBLIC_ROUTES;
+
+    for (const vp of VIEWPORTS) {
+      for (const route of routes) {
+        if (route.dynamic) continue; // necessite un id reel
+        await page.setViewportSize({ width: vp.w, height: vp.h });
+        try {
+          await page.goto(route.path, { waitUntil: 'domcontentloaded', timeout: 20000 });
+          await page.waitForTimeout(600);
+        } catch {
+          results.push({ browser, theme, vp: vp.name, route: route.name, error: 'navigation' });
+          continue;
+        }
+        const audit = await page.evaluate(AUDIT);
+        if (audit.horizontalScroll || audit.offenders.length) {
+          results.push({ browser, theme, vp: vp.name, route: route.name, ...audit });
+        }
       }
     }
   }
 
   const file = `tests/e2e/responsive-report.${browser}.json`;
   fs.writeFileSync(file, JSON.stringify(results, null, 2));
+
+  // Tableau lisible
   console.log(`\n=== ${browser}: ${results.length} probleme(s) -> ${file} ===`);
+  for (const r of results) {
+    console.log(
+      `${r.theme} ${r.vp} ${r.route} scrollH=${r.horizontalScroll} offenders=${r.offenders?.length ?? 0}`,
+    );
+    for (const o of r.offenders || []) console.log(`   - ${o.path} (+${o.overflowRight})`);
+  }
 });
