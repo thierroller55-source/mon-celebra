@@ -5,6 +5,7 @@ import { useAuth } from '../hooks/useAuth.js';
 import { useLocalePath } from '../context/LocaleContext.jsx';
 import NotificationBell from '../components/notifications/NotificationBell.jsx';
 import LanguageSwitcher from '../components/i18n/LanguageSwitcher.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -23,13 +24,13 @@ export default function DashboardLayout() {
   };
 
   const navClass = ({ isActive }) =>
-    `flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm ${
+    `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm lg:w-full ${
       isActive ? 'bg-celebra-gold/10 font-medium text-celebra-gold' : 'text-celebra-dark/70 hover:bg-celebra-dark/5'
     }`;
 
   return (
     <div className="flex min-h-dvh flex-col bg-celebra-cream lg:flex-row">
-      <aside className="border-b border-celebra-dark/10 bg-white lg:w-64 lg:shrink-0 lg:border-b-0 lg:border-r">
+      <aside className="border-b border-celebra-dark/10 bg-celebra-paper lg:w-64 lg:shrink-0 lg:border-b-0 lg:border-r">
         <div className="flex items-center justify-between px-4 py-3">
           <Link to={lp('/')} className="font-heading text-lg font-bold text-celebra-gold">
             {t('common.appName')}
@@ -58,17 +59,18 @@ export default function DashboardLayout() {
         </nav>
       </aside>
 
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-celebra-dark/10 bg-white px-4 py-3">
-          <p className="truncate text-sm text-celebra-dark/70">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-celebra-dark/10 bg-celebra-paper px-4 py-3">
+          <p className="min-w-0 flex-1 truncate text-sm text-celebra-dark/70">
             {user?.firstName
               ? t('dashboard.greeting', { name: user.firstName })
               : t('dashboard.greetingGuest')}{' '}
             &#128075;
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-end gap-2">
             <NotificationBell />
             <LanguageSwitcher />
+            <ThemeToggle />
             {user?.role === 'admin' ? (
               <button type="button" onClick={handleLogout} className="btn-outline">
                 <LogOut size={16} />

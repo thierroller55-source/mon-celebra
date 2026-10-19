@@ -15,6 +15,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
+    pendingEmail: { type: String, lowercase: true, trim: true },
     passwordHash: { type: String, required: true, select: false },
     phone: { type: String, trim: true, maxlength: 30 },
     role: { type: String, enum: Object.values(ROLES), default: ROLES.USER },

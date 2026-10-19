@@ -50,7 +50,7 @@ export default function ImageField({ value, onChange, id, compact = false }) {
           <div className="absolute right-2 top-2 flex gap-2">
             <button
               type="button"
-              className="rounded-lg bg-white/90 p-1.5 text-celebra-dark shadow hover:bg-white"
+              className="rounded-lg bg-white/90 p-1.5 text-celebra-night shadow hover:bg-white"
               onClick={() => inputRef.current?.click()}
               aria-label="Remplacer l'image"
             >
@@ -71,7 +71,7 @@ export default function ImageField({ value, onChange, id, compact = false }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={loading}
-          className={`flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-celebra-dark/25 bg-white text-sm text-celebra-dark/60 hover:border-celebra-gold hover:text-celebra-dark disabled:opacity-60 ${height}`}
+          className={`flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-celebra-dark/25 bg-celebra-paper text-sm text-celebra-dark/60 hover:border-celebra-gold hover:text-celebra-dark disabled:opacity-60 ${height}`}
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : <ImagePlus size={18} />}
           {loading ? 'Envoi...' : 'Ajouter une image'}

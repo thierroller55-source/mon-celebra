@@ -7,6 +7,8 @@ import { getErrorMessage } from '../../services/api.js';
 import { authService } from '../../services/auth.service.js';
 import { LANGUAGE_NAMES } from '../../i18n/config.js';
 
+const EMPTY_PASSWORD = { currentPassword: '', newPassword: '', confirmPassword: '' };
+
 export default function MonCompte() {
   const { user, setUser } = useAuth();
   const { t } = useTranslation();
@@ -18,13 +20,18 @@ export default function MonCompte() {
   const [success, setSuccess] = useState('');
   const [sending, setSending] = useState(false);
 
+  const [passwords, setPasswords] = useState(EMPTY_PASSWORD);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState('');
+
   useEffect(() => {
     if (user) {
       setForm({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         phone: user.phone || '',
-        email: user.email || '',
+        email: user.pendingEmail || user.email || '',
       });
     }
   }, [user]);
@@ -41,18 +48,54 @@ export default function MonCompte() {
     setError('');
     setSuccess('');
     try {
-      const updated = await userService.updateMe({
+      const { user: updated, emailChangeRequested } = await userService.updateMe({
         firstName: form.firstName,
         lastName: form.lastName,
         phone: form.phone,
         language: locale,
+        email: form.email,
       });
       setUser(updated);
-      setSuccess(t('account.saved'));
+      setSuccess(
+        emailChangeRequested
+          ? t('account.emailChangeRequested', { email: form.email })
+          : t('account.saved'),
+      );
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswords((p) => ({ ...p, [e.target.name]: e.target.value }));
+    setPasswordError('');
+    setPasswordSuccess('');
+  };
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPasswordError('');
+    setPasswordSuccess('');
+
+    if (passwords.newPassword !== passwords.confirmPassword) {
+      setPasswordError(t('account.passwordMismatch'));
+      return;
+    }
+
+    setSavingPassword(true);
+    try {
+      await userService.changePassword({
+        currentPassword: passwords.currentPassword || undefined,
+        newPassword: passwords.newPassword,
+      });
+      setPasswords(EMPTY_PASSWORD);
+      setPasswordSuccess(t('account.passwordChanged'));
+    } catch (err) {
+      setPasswordError(getErrorMessage(err));
+    } finally {
+      setSavingPassword(false);
     }
   };
 
@@ -126,8 +169,7 @@ export default function MonCompte() {
             type="email"
             className="input"
             value={form.email}
-            disabled
-            readOnly
+            onChange={handleChange}
           />
           <p className="mt-1 text-xs text-celebra-dark/60">
             {user?.emailVerified ? t('account.emailVerified') : t('account.emailNotVerified')}
@@ -142,6 +184,11 @@ export default function MonCompte() {
               </button>
             )}
           </p>
+          {user?.pendingEmail && (
+            <p className="mt-1 text-xs text-amber-700">
+              {t('account.emailPending', { email: user.pendingEmail })}
+            </p>
+          )}
         </div>
 
         <div>
@@ -177,14 +224,77 @@ export default function MonCompte() {
           <p className="mt-1 text-xs text-celebra-dark/60">{t('account.languageHint')}</p>
         </div>
 
-        <div className="flex gap-3">
-          <button type="submit" className="btn-primary" disabled={saving}>
-            {saving ? t('editor.submitting') : t('common.save')}
-          </button>
-          <a href="/mot-de-passe-oublie" className="btn-outline">
-            {t('account.changePassword')}
-          </a>
+        <button type="submit" className="btn-primary" disabled={saving}>
+          {saving ? t('editor.submitting') : t('common.save')}
+        </button>
+      </form>
+
+      <form onSubmit={handlePasswordSubmit} className="card mt-6 space-y-4 p-6">
+        <h2 className="text-lg font-semibold">{t('account.passwordTitle')}</h2>
+
+        {passwordError && (
+          <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
+            {passwordError}
+          </p>
+        )}
+        {passwordSuccess && (
+          <p role="alert" className="rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+            {passwordSuccess}
+          </p>
+        )}
+
+        {user?.isGuest ? (
+          <p className="text-sm text-celebra-dark/60">{t('account.setPasswordHint')}</p>
+        ) : (
+          <div>
+            <label htmlFor="currentPassword" className="label">
+              {t('account.currentPassword')}
+            </label>
+            <input
+              id="currentPassword"
+              name="currentPassword"
+              type="password"
+              autoComplete="current-password"
+              className="input"
+              value={passwords.currentPassword}
+              onChange={handlePasswordChange}
+            />
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="newPassword" className="label">
+              {t('account.newPassword')}
+            </label>
+            <input
+              id="newPassword"
+              name="newPassword"
+              type="password"
+              autoComplete="new-password"
+              className="input"
+              value={passwords.newPassword}
+              onChange={handlePasswordChange}
+            />
+          </div>
+          <div>
+            <label htmlFor="confirmPassword" className="label">
+              {t('account.confirmPassword')}
+            </label>
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              className="input"
+              value={passwords.confirmPassword}
+              onChange={handlePasswordChange}
+            />
+          </div>
         </div>
+
+        <button type="submit" className="btn-outline" disabled={savingPassword}>
+          {savingPassword ? t('editor.submitting') : t('account.changePassword')}
+        </button>
       </form>
     </div>
   );

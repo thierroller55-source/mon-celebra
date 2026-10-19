@@ -29,6 +29,16 @@ export const PLAN_PROVIDERS = [
   },
 ];
 
+// Fond "plan" sombre, pour le thème nuit.
+export const DARK_PLAN_PROVIDERS = [
+  {
+    key: 'carto-dark',
+    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    attribution: `${OSM_ATTRIBUTION} &copy; <a href="https://carto.com/attributions">CARTO</a>`,
+  },
+  { key: 'osm', url: OSM_TILE_URL, attribution: OSM_ATTRIBUTION },
+];
+
 // Vue satellite (Esri World Imagery, gratuite, attribution requise).
 export const SATELLITE_PROVIDER = {
   key: 'esri',

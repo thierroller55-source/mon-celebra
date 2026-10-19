@@ -21,6 +21,10 @@
     "loading": "Mu ngi dox...",
     "retry": "Jéemaat",
     "close": "Tëj",
+    "notifications": "Xibaar yi",
+    "markAllRead": "Merkee ñépp jàng nañu",
+    "noNotifications": "Amul xibaar",
+    "toggleTheme": "Soppi melo",
     "actions": "Jëf yi",
     "language": "Làkk",
     "chooseLanguage": "Tannal làkk",
@@ -70,6 +74,14 @@
     "languageHint": "Làkk bi nga tann fii, ñu koy jëfandikoo ci sa aparëy yépp.",
     "saved": "Profil bi soppi nañu koo bu baax.",
     "verificationSent": "Yónnee nañu imel bu dëggal.",
+    "emailPending": "Mu ngi xaar dëggal : {email}",
+    "emailChangeRequested": "Yónnee nañu imel bu dëggal ci {email}.",
+    "passwordTitle": "Soppil baatujàll bi",
+    "currentPassword": "Baatujàll bi fi mu ngi",
+    "newPassword": "Baatujàll bu bees",
+    "confirmPassword": "Dëggalal baatujàll bi",
+    "passwordMismatch": "Baatujàll yi ñuñu ñaawal.",
+    "passwordChanged": "Soppi nañu baatujàll bi.",
     "changePassword": "Soppil sama baatujàll"
   },
   "editor": {
@@ -142,7 +154,8 @@
     "gallery": "Nataal yi",
     "photoAlt": "Nataal {index}",
     "posterAlt": "Afiis bu evenman bi",
-    "notFound": "Ñu koo fekkul evenman bi."
+    "notFound": "Ñu koo fekkul evenman bi.",
+    "notPublished": "Feeñuloo evenman bii. Jéemaat bu ñu koo feeñal."
   },
   "poster": {
     "caption": "Ngir xam lu ëpp ak gis xibaar yi lépp, skane kodu QR bi.",
@@ -156,6 +169,7 @@
     "positionLeft": "Suuf ci càmmooñ",
     "positionCenter": "Suuf ci digg",
     "noPoster": "Amul afiis bu ñu yeb ci evenman bii.",
+    "draftWarning": "Feeñuloo evenman bii : kodu QR bi dina dox rekk bu ñu koo feeñal.",
     "alt": "Afiis bu {title}"
   },
   "errors": {

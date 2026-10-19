@@ -96,9 +96,14 @@ test('parcours complet Graduation : creation, persistance, publication, page pub
   assert.equal(fetched.body.data.event.details.institution, 'UCAD');
   assert.equal(fetched.body.data.event.location.name, 'Amphitheatre UCAD');
 
-  // 7. Un brouillon n'est PAS expose publiquement
+  // 7. Un brouillon n'est PAS expose publiquement (code distinct pour l'UI)
   const draftPublic = await api.get(`/public/events/${event.slug}`);
   assert.equal(draftPublic.status, 404);
+  assert.equal(draftPublic.body.code, 'EVENT_NOT_PUBLISHED');
+
+  const unknownPublic = await api.get('/public/events/evenement-inexistant-xyz');
+  assert.equal(unknownPublic.status, 404);
+  assert.equal(unknownPublic.body.code, 'EVENT_NOT_FOUND');
 
   // 8. Publication
   const published = await api.post(`/events/${event._id}/publish`);

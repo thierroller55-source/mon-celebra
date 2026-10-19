@@ -2,6 +2,7 @@ import { Router } from 'express';
 import mongoose from 'mongoose';
 import authRoutes from './auth.routes.js';
 import userRoutes from './user.routes.js';
+import meRoutes from './me.routes.js';
 import publicRoutes from './public.routes.js';
 import uploadRoutes from './upload.routes.js';
 import eventRoutes from './event.routes.js';
@@ -28,6 +29,7 @@ router.get('/health', (req, res) => {
 // Auth & profil
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
+router.use('/me', meRoutes);
 
 // Evenements (organisateur, authentifie)
 router.use('/events', eventRoutes);

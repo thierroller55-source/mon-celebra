@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
+import { APP_NAME } from './brand.js';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -19,7 +20,7 @@ const schema = z.object({
   JWT_SECRET: z.string().min(16, 'JWT_SECRET doit contenir au moins 16 caracteres'),
   JWT_EXPIRES_IN: z.string().default('15m'),
   REFRESH_TOKEN_SECRET: z.string().min(16, 'REFRESH_TOKEN_SECRET doit contenir au moins 16 caracteres'),
-  REFRESH_TOKEN_EXPIRES_IN: z.string().default('7d'),
+  REFRESH_TOKEN_EXPIRES_IN: z.string().default('30d'),
   COOKIE_SAMESITE: z.enum(['lax', 'strict', 'none']).optional(),
   CLIENT_URL: z.string().default('http://localhost:5173'),
   PUBLIC_BASE_URL: z.string().default('http://localhost:5000'),
@@ -32,7 +33,7 @@ const schema = z.object({
   // Envoi d'emails transactionnels via Brevo (optionnel : desactive si absent).
   BREVO_API_KEY: optionalString,
   MAIL_FROM: z.string().email().default('no-reply@moncelebra.com'),
-  MAIL_FROM_NAME: z.string().default('Mon Celebra'),
+  MAIL_FROM_NAME: z.string().default(APP_NAME),
   MAIL_REPLY_TO: optionalString,
 }).superRefine((data, ctx) => {
   const cloudinaryVars = [

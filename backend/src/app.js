@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import mongoSanitize from 'express-mongo-sanitize';
 
 import { env } from './config/env.js';
+import { APP_NAME } from './config/brand.js';
 import apiRoutes from './routes/index.js';
 import { globalLimiter } from './middleware/rateLimiter.js';
 import { originGuard } from './middleware/originGuard.js';
@@ -67,7 +68,7 @@ app.use('/uploads', express.static(env.uploadDir));
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    name: 'Mon Celebra API',
+    name: `${APP_NAME} API`,
     slogan: "Chaque moment merite d'etre celebre.",
   });
 });

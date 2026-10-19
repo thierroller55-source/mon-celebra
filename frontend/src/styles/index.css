@@ -3,6 +3,20 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --c-ink: 31 41 55;
+    --c-surface: 250 247 242;
+    --c-paper: 255 255 255;
+    color-scheme: light;
+  }
+
+  .dark {
+    --c-ink: 229 231 235;
+    --c-surface: 17 24 39;
+    --c-paper: 31 41 55;
+    color-scheme: dark;
+  }
+
   html {
     -webkit-text-size-adjust: 100%;
   }
@@ -34,12 +48,12 @@
   }
 
   .btn-outline {
-    @apply btn border border-celebra-dark/20 bg-white text-celebra-dark
+    @apply btn border border-celebra-dark/20 bg-celebra-paper text-celebra-dark
       hover:bg-celebra-dark/5;
   }
 
   .input {
-    @apply w-full rounded-lg border border-celebra-dark/15 bg-white px-3 py-2.5
+    @apply w-full rounded-lg border border-celebra-dark/15 bg-celebra-paper px-3 py-2.5
       text-sm text-celebra-dark placeholder:text-celebra-dark/40
       focus:border-celebra-gold focus:outline-none focus:ring-1
       focus:ring-celebra-gold;
@@ -50,6 +64,14 @@
   }
 
   .card {
-    @apply rounded-xl border border-celebra-dark/10 bg-white shadow-sm;
+    @apply rounded-xl border border-celebra-dark/10 bg-celebra-paper shadow-sm;
   }
+}
+
+.leaflet-container {
+  background: #ddd;
+}
+
+.dark .leaflet-container {
+  background: #1f2937;
 }

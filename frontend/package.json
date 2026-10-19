@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Application React Mon Celebra",
+  "description": "Application React Célébra",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

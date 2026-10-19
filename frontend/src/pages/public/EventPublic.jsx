@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import { Lock, Loader2 } from 'lucide-react';
+import { Lock, Loader2, RefreshCw } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { publicService } from '../../services/public.service.js';
 import { categoryService } from '../../services/category.service.js';
@@ -8,6 +8,7 @@ import { getErrorMessage } from '../../services/api.js';
 import { resolveVariant } from '../../templates/registry.js';
 import EventTemplate from '../../templates/EventTemplate.jsx';
 import { applyEventSeo } from '../../lib/seo.js';
+import { APP_NAME } from '../../lib/brand.js';
 import { DEFAULT_LOCALE } from '../../i18n/config.js';
 
 export default function EventPublic() {
@@ -23,11 +24,13 @@ export default function EventPublic() {
   const [error, setError] = useState('');
   const [errorCode, setErrorCode] = useState('');
   const [codeInput, setCodeInput] = useState('');
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     setError('');
+    setErrorCode('');
 
     publicService
       .getEvent(slug, code)
@@ -49,11 +52,10 @@ export default function EventPublic() {
       .finally(() => {
         if (active) setLoading(false);
       });
-
     return () => {
       active = false;
     };
-  }, [slug, code]);
+  }, [slug, code, reloadKey]);
 
   // Redirection des anciennes URLs /e/:slug vers la langue de l'evenement
   // (les QR codes deja imprimes continuent de fonctionner).
@@ -69,7 +71,7 @@ export default function EventPublic() {
   useEffect(() => {
     if (event) applyEventSeo(event);
     return () => {
-      document.title = 'Mon Celebra';
+      document.title = APP_NAME;
     };
   }, [event]);
 
@@ -113,13 +115,29 @@ export default function EventPublic() {
   }
 
   if (error || !event) {
+    const message =
+      errorCode === 'EVENT_NOT_PUBLISHED'
+        ? t('publicPage.notPublished')
+        : errorCode === 'EVENT_NOT_FOUND'
+          ? t('publicPage.notFound')
+          : error || t('publicPage.notFound');
+
     return (
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-4 px-4 py-24 text-center">
         <p className="font-heading text-5xl font-bold text-celebra-gold">Oups</p>
-        <p className="text-sm text-celebra-dark/70">{error || t('publicPage.notFound')}</p>
-        <a href="/" className="btn-primary">
-          {t('common.backHome')}
-        </a>
+        <p className="text-sm text-celebra-dark/70">{message}</p>
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <a href="/" className="btn-primary">
+            {t('common.backHome')}
+          </a>
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => setReloadKey((k) => k + 1)}
+          >
+            <RefreshCw size={15} /> {t('common.retry')}
+          </button>
+        </div>
       </div>
     );
   }

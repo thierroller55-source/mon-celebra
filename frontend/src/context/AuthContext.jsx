@@ -59,8 +59,10 @@ export function AuthProvider({ children }) {
     let active = true;
     (async () => {
       try {
-        const data = await authService.me();
-        if (active) setUser(data);
+        // Bootstrap via le cookie de session (refresh) : evite un 401 garanti
+        // a chaque chargement puisque l'access token n'existe qu'en memoire.
+        const data = await authService.refresh();
+        if (active) applySession(data);
       } catch {
         if (active) setUser(null);
       } finally {
@@ -70,7 +72,7 @@ export function AuthProvider({ children }) {
     return () => {
       active = false;
     };
-  }, []);
+  }, [applySession]);
 
   const value = useMemo(
     () => ({ user, loading, login, register, guest, logout, setUser }),

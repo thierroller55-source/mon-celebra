@@ -13,10 +13,10 @@ import {
   verifyRefreshToken,
   createResetToken,
   hashResetToken,
-  createEmailVerificationToken,
 } from '../services/auth.service.js';
 import { sendEmailSafe } from '../services/mailer.service.js';
-import { resetPasswordTemplate, verifyEmailTemplate } from '../services/emailTemplates.js';
+import { sendEmailVerification } from '../services/emailVerification.service.js';
+import { resetPasswordTemplate } from '../services/emailTemplates.js';
 
 function authPayload(user) {
   return { user: user.toJSON(), accessToken: signAccessToken(user) };
@@ -25,17 +25,14 @@ function authPayload(user) {
 /**
  * Genere un token de verification et envoie l'email correspondant.
  * N'echoue jamais la requete appelante (l'email est best-effort).
+ * Vise l'adresse en attente si un changement d'email est en cours, ce qui
+ * permet aussi a un invite de confirmer sa premiere adresse reelle.
  */
 async function sendVerificationEmail(user) {
-  if (!user?.email || user.isGuest) return;
-  const { token, tokenHash, expiresAt } = createEmailVerificationToken();
-  await User.updateOne(
-    { _id: user._id },
-    { $set: { emailVerificationTokenHash: tokenHash, emailVerificationExpiresAt: expiresAt } },
-  );
-  const verifyUrl = `${env.clientUrl}/verifier-email/${token}`;
-  const { subject, html } = verifyEmailTemplate({ name: user.firstName, verifyUrl });
-  await sendEmailSafe({ to: user.email, subject, html });
+  const target = user?.pendingEmail || user?.email;
+  if (!target) return;
+  if (!user.pendingEmail && user.isGuest) return;
+  await sendEmailVerification(user, target);
 }
 
 export const register = asyncHandler(async (req, res) => {
@@ -190,10 +187,26 @@ export const verifyEmail = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('Lien de verification invalide ou expire.', 'INVALID_VERIFICATION_TOKEN');
   }
 
+  // Changement d'email ou conversion d'un compte invite : l'adresse confirmee
+  // devient l'email principal et le compte n'est plus anonyme.
+  if (user.pendingEmail) {
+    user.email = user.pendingEmail;
+    user.pendingEmail = undefined;
+    user.isGuest = false;
+  }
+
   user.emailVerified = true;
   user.emailVerificationTokenHash = undefined;
   user.emailVerificationExpiresAt = undefined;
-  await user.save({ validateBeforeSave: false });
+
+  try {
+    await user.save();
+  } catch (err) {
+    if (err?.code === 11000) {
+      throw ApiError.conflict('Cette adresse email est deja utilisee.', 'EMAIL_TAKEN');
+    }
+    throw err;
+  }
 
   res.json({ success: true, data: { message: 'Votre adresse email est confirmee.' } });
 });

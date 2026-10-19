@@ -1,3 +1,5 @@
+import { APP_NAME } from '../config/brand.js';
+
 /**
  * Genere un flux iCalendar (RFC 5545) minimal pour un evenement, afin que les
  * invites puissent l'ajouter a leur agenda (Google Agenda, Apple Calendar, ...).
@@ -65,7 +67,7 @@ export function buildEventIcs(event, url) {
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Mon Celebra//Mon Celebra//FR',
+    `PRODID:-//${APP_NAME}//${APP_NAME}//FR`,
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',

@@ -62,7 +62,7 @@ export default function MapPicker({ latitude, longitude, onChange, className = '
       <button
         type="button"
         onClick={() => setMode((m) => (m === 'plan' ? 'satellite' : 'plan'))}
-        className="absolute right-3 top-3 z-[500] inline-flex items-center gap-1.5 rounded-lg border border-celebra-dark/10 bg-white/95 px-2.5 py-1.5 text-xs font-medium shadow-sm hover:bg-white"
+        className="absolute right-3 top-3 z-[500] inline-flex items-center gap-1.5 rounded-lg border border-celebra-dark/10 bg-celebra-paper/95 px-2.5 py-1.5 text-xs font-medium shadow-sm hover:bg-celebra-paper"
         title="Basculer Plan / Satellite"
       >
         <Layers size={14} />

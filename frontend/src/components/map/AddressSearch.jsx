@@ -79,7 +79,7 @@ export default function AddressSearch({ onSelect, country = 'sn', className = ''
       </div>
 
       {open && results.length > 0 && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-xl border border-celebra-dark/10 bg-white shadow-lg">
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-auto rounded-xl border border-celebra-dark/10 bg-celebra-paper shadow-lg">
           {results.map((r, idx) => (
             <button
               key={idx}

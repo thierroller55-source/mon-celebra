@@ -1,11 +1,12 @@
 import mongoose from 'mongoose';
 import app from './app.js';
 import { env } from './config/env.js';
+import { APP_NAME } from './config/brand.js';
 import { logger } from './utils/logger.js';
 import { connectDB } from './config/db.js';
 
 const server = app.listen(env.PORT, () => {
-  logger.info(`API Mon Celebra demarree : http://localhost:${env.PORT} (${env.NODE_ENV})`);
+  logger.info(`API ${APP_NAME} demarree : http://localhost:${env.PORT} (${env.NODE_ENV})`);
 });
 
 connectDB().catch((error) => {

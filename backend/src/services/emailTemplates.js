@@ -1,8 +1,10 @@
+import { APP_NAME } from '../config/brand.js';
+
 const BRAND = {
   gold: '#B08D57',
   dark: '#1F2937',
   cream: '#FAF7F2',
-  name: 'Mon Celebra',
+  name: APP_NAME,
   slogan: "Chaque moment merite d'etre celebre.",
 };
 
@@ -21,7 +23,7 @@ function layout({ title, intro, buttonLabel, buttonUrl, outro }) {
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 6px 24px rgba(31,41,55,0.08);">
           <tr>
             <td style="background:${BRAND.dark};padding:28px 32px;text-align:center;">
-              <div style="font-size:22px;font-weight:bold;letter-spacing:1px;color:${BRAND.gold};">Mon Celebra</div>
+              <div style="font-size:22px;font-weight:bold;letter-spacing:1px;color:${BRAND.gold};">${BRAND.name}</div>
               <div style="font-size:12px;color:#d1d5db;margin-top:4px;">${BRAND.slogan}</div>
             </td>
           </tr>
@@ -56,7 +58,7 @@ function layout({ title, intro, buttonLabel, buttonUrl, outro }) {
 
 export function resetPasswordTemplate({ name, resetUrl }) {
   return {
-    subject: 'Reinitialisation de votre mot de passe - Mon Celebra',
+    subject: `Reinitialisation de votre mot de passe - ${APP_NAME}`,
     html: layout({
       title: 'Reinitialiser votre mot de passe',
       intro: `Bonjour ${name || ''},<br /><br />Vous avez demande la reinitialisation de votre mot de passe. Ce lien est valable <strong>1 heure</strong>.`,
@@ -69,10 +71,10 @@ export function resetPasswordTemplate({ name, resetUrl }) {
 
 export function verifyEmailTemplate({ name, verifyUrl }) {
   return {
-    subject: 'Confirmez votre adresse email - Mon Celebra',
+    subject: `Confirmez votre adresse email - ${APP_NAME}`,
     html: layout({
       title: 'Confirmez votre adresse email',
-      intro: `Bonjour ${name || ''},<br /><br />Bienvenue sur Mon Celebra. Merci de confirmer votre adresse email pour activer toutes les fonctionnalites de votre compte. Ce lien est valable <strong>24 heures</strong>.`,
+      intro: `Bonjour ${name || ''},<br /><br />Bienvenue sur ${APP_NAME}. Merci de confirmer votre adresse email pour activer toutes les fonctionnalites de votre compte. Ce lien est valable <strong>24 heures</strong>.`,
       buttonLabel: 'Confirmer mon email',
       buttonUrl: verifyUrl,
       outro: "Si vous n'avez pas cree de compte, vous pouvez ignorer cet email.",

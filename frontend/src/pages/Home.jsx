@@ -87,7 +87,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="border-t border-celebra-dark/10 bg-white py-14">
+      <section className="border-t border-celebra-dark/10 bg-celebra-paper py-14">
         <div className="mx-auto w-full max-w-6xl px-4">
           <h2 className="mb-8 text-center text-2xl font-bold">
             Tout ce qu&apos;il faut pour reussir votre evenement

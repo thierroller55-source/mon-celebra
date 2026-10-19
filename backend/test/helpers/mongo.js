@@ -17,7 +17,10 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test-jwt-secret-1234567890';
 process.env.REFRESH_TOKEN_SECRET =
   process.env.REFRESH_TOKEN_SECRET || 'test-refresh-secret-1234567890';
 process.env.STORAGE_DRIVER = 'local';
-process.env.UPLOAD_DIR = path.join(os.tmpdir(), 'moncelebra-test-uploads');
+// Dossier unique par processus de test : les fichiers de test tournent en
+// parallele et chacun efface son dossier en fin de suite. Un chemin partage
+// provoquait des ENOENT intermittents (scandir sur un dossier supprime).
+process.env.UPLOAD_DIR = path.join(os.tmpdir(), `moncelebra-test-uploads-${process.pid}`);
 // Desactive l'envoi d'emails (Brevo) : aucun email reel ne doit partir des tests.
 process.env.BREVO_API_KEY = '';
 

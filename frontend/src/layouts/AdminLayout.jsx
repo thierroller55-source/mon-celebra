@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
 import { greetUser } from '../utils/greeting.js';
+import { APP_NAME } from '../lib/brand.js';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 const navItems = [
   { to: '/admin', label: 'Vue d\u2019ensemble', icon: LayoutDashboard, end: true },
@@ -34,10 +36,10 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-celebra-cream lg:flex-row">
-      <aside className="border-b border-celebra-dark/10 bg-celebra-dark text-white lg:w-64 lg:shrink-0 lg:border-b-0">
+      <aside className="border-b border-celebra-dark/10 bg-celebra-night text-white lg:w-64 lg:shrink-0 lg:border-b-0">
         <div className="flex items-center justify-between px-4 py-3">
           <Link to="/admin" className="font-heading text-lg font-bold text-celebra-gold">
-            Mon Celebra · Admin
+            {APP_NAME} · Admin
           </Link>
           <Link to="/" className="btn-outline lg:hidden" aria-label="Retour a l'accueil">
             <Home size={16} />
@@ -50,7 +52,7 @@ export default function AdminLayout() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                `flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm ${
+                `flex shrink-0 items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm lg:w-full ${
                   isActive
                     ? 'bg-celebra-gold/20 font-medium text-celebra-gold'
                     : 'text-white/70 hover:bg-white/10'
@@ -64,18 +66,21 @@ export default function AdminLayout() {
         </nav>
       </aside>
 
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between gap-3 border-b border-celebra-dark/10 bg-white px-4 py-3">
-          <p className="truncate text-sm text-celebra-dark/70">
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-celebra-dark/10 bg-celebra-paper px-4 py-3">
+          <p className="min-w-0 flex-1 truncate text-sm text-celebra-dark/70">
             {greetUser(user, { withLastName: true })}
             <span className="ml-2 rounded-full bg-celebra-gold/10 px-2 py-0.5 text-xs font-medium text-celebra-gold">
               Administrateur
             </span>
           </p>
-          <button type="button" onClick={handleLogout} className="btn-outline">
-            <LogOut size={16} />
-            Deconnexion
-          </button>
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <button type="button" onClick={handleLogout} className="btn-outline shrink-0">
+              <LogOut size={16} />
+              Deconnexion
+            </button>
+          </div>
         </header>
         <main className="flex-1 p-4 lg:p-6">
           <Outlet />

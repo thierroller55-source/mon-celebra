@@ -71,7 +71,7 @@ export default function GalleryField({ value = [], onChange }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={loading}
-          className="flex h-24 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-celebra-dark/25 bg-white text-sm text-celebra-dark/60 hover:border-celebra-gold hover:text-celebra-dark disabled:opacity-60"
+          className="flex h-24 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-celebra-dark/25 bg-celebra-paper text-sm text-celebra-dark/60 hover:border-celebra-gold hover:text-celebra-dark disabled:opacity-60"
         >
           {loading ? <Loader2 className="animate-spin" size={18} /> : <ImagePlus size={18} />}
           {loading ? 'Envoi...' : `Ajouter des images (${images.length}/${MAX})`}

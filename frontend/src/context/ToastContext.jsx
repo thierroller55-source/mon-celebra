@@ -51,7 +51,7 @@ export function ToastProvider({ children }) {
                 ? 'bg-red-600'
                 : toast.type === 'success'
                   ? 'bg-green-600'
-                  : 'bg-celebra-dark'
+                  : 'bg-celebra-night'
             }`}
           >
             {toast.message}

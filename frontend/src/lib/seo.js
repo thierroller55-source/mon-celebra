@@ -1,3 +1,5 @@
+import { APP_NAME } from './brand.js';
+
 const PUBLIC_BASE = (
   import.meta.env.VITE_PUBLIC_URL || 'https://mon-celebra.vercel.app'
 ).replace(/\/+$/, '');
@@ -31,7 +33,7 @@ export function applyEventSeo(event) {
   const lang = ['fr', 'en', 'wo'].includes(event?.language) ? event.language : 'fr';
   const slug = event?.slug;
   const pageUrl = `${PUBLIC_BASE}/${lang}/e/${slug}`;
-  const title = event?.title || 'Mon Celebra';
+  const title = event?.title || APP_NAME;
   const description = event?.tagline || event?.description || title;
 
   document.title = title;

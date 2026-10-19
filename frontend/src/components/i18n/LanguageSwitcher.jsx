@@ -15,7 +15,7 @@ export default function LanguageSwitcher({ className = '', variant = 'light' }) 
   const base =
     variant === 'dark'
       ? 'border-white/25 bg-white/10 text-white'
-      : 'border-celebra-dark/15 bg-white text-celebra-dark/70';
+      : 'border-celebra-dark/15 bg-celebra-paper text-celebra-dark/70';
 
   return (
     <label

@@ -36,18 +36,20 @@ export function verifyRefreshToken(token) {
 
 /**
  * Options du cookie httpOnly qui transporte le refresh token.
- * Frontend et API etant sur des domaines distincts en production, le cookie
- * doit etre "SameSite=None; Secure" pour etre envoye en cross-site. Ce
- * comportement reste configurable via COOKIE_SAMESITE (utile si un meme
- * domaine racine sert le front et l'API).
+ *
+ * En production l'API est exposee via un proxy same-origin (rewrite Vercel
+ * `/api/*` -> backend), donc le cookie est "first-party" et peut rester en
+ * "SameSite=Lax" : il survit aux limitations de cookies tiers de Safari/iOS.
+ * COOKIE_SAMESITE=none reste disponible si le front et l'API sont servis sur
+ * des domaines totalement distincts sans proxy.
  */
 function refreshCookieOptions() {
   return {
     httpOnly: true,
     secure: env.isProduction,
-    sameSite: env.COOKIE_SAMESITE || (env.isProduction ? 'none' : 'lax'),
-    path: '/api/auth',
-    maxAge: parseDuration(env.REFRESH_TOKEN_EXPIRES_IN, 7 * 86_400_000),
+    sameSite: env.COOKIE_SAMESITE || 'lax',
+    path: '/',
+    maxAge: parseDuration(env.REFRESH_TOKEN_EXPIRES_IN, 30 * 86_400_000),
   };
 }
 
@@ -56,7 +58,10 @@ export function setRefreshCookie(res, user) {
 }
 
 export function clearRefreshCookie(res) {
+  // On nettoie aussi l'ancien chemin (/api/auth) pour eviter un cookie
+  // residuel qui maintiendrait une session fantome apres deploiement.
   res.clearCookie(REFRESH_COOKIE, { ...refreshCookieOptions(), maxAge: undefined });
+  res.clearCookie(REFRESH_COOKIE, { ...refreshCookieOptions(), path: '/api/auth', maxAge: undefined });
 }
 
 /** Hash + expiration du token de reinitialisation de mot de passe. */

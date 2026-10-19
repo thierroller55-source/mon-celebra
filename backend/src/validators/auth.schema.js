@@ -51,7 +51,13 @@ export const updateMeSchema = z
     lastName: z.string().trim().min(1).max(60).optional(),
     phone: z.string().trim().max(30).optional(),
     language: z.enum(['fr', 'en', 'wo']).optional(),
+    email: email.optional(),
   })
   .refine((data) => Object.keys(data).length > 0, {
     message: 'Aucune donnee a mettre a jour.',
   });
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().max(128).optional(),
+  newPassword: password,
+});

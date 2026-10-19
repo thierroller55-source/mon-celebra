@@ -49,7 +49,7 @@ const VARIANTS = {
     background: true,
   },
   minimal: {
-    hero: 'border-b border-celebra-dark/10 bg-white px-4 py-16 text-center sm:py-24',
+    hero: 'border-b border-celebra-dark/10 bg-celebra-paper px-4 py-16 text-center sm:py-24',
     heroText: 'text-celebra-dark',
     title: 'mx-auto max-w-3xl font-heading text-3xl font-bold sm:text-5xl',
     subtitle: 'mx-auto mt-3 max-w-xl text-celebra-dark/70',
@@ -155,8 +155,8 @@ export default function EventTemplate({ event, category = null, variant = 'class
               href={calendarUrl(event.slug, accessCode)}
               className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
                 style.background
-                  ? 'bg-white text-celebra-dark hover:bg-white/90'
-                  : 'bg-celebra-dark text-white hover:opacity-90'
+                  ? 'bg-white text-celebra-night hover:bg-white/90'
+                  : 'bg-celebra-night text-white hover:opacity-90'
               }`}
             >
               <Calendar size={16} />

@@ -260,7 +260,7 @@ export default function EventForm({
             <div className="absolute right-2 top-2 flex gap-2">
               <label
                 htmlFor="poster"
-                className="cursor-pointer rounded-lg bg-white/90 p-1.5 text-celebra-dark shadow hover:bg-white"
+                className="cursor-pointer rounded-lg bg-white/90 p-1.5 text-celebra-night shadow hover:bg-white"
                 aria-label={t('editor.posterReplace')}
               >
                 <ImagePlus size={16} />

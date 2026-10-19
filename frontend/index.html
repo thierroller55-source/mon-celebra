@@ -10,6 +10,22 @@
       content="Mon Celebra — Créez et partagez une page interactive pour votre mariage, anniversaire ou baptême. Chaque moment mérite d'être célébré."
     />
     <title>Mon Celebra — Chaque moment mérite d'être célébré</title>
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('celebra-theme');
+          var dark = stored
+            ? stored === 'dark'
+            : window.matchMedia('(prefers-color-scheme: dark)').matches;
+          if (dark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.backgroundColor = '#111827';
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -67,7 +67,7 @@ export default function EventPreview() {
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-celebra-dark/10 bg-white">
+    <div className="overflow-hidden rounded-2xl border border-celebra-dark/10 bg-celebra-paper">
       <div className="flex items-center justify-between gap-3 border-b border-celebra-dark/10 bg-celebra-cream/60 px-4 py-3">
         <span className="inline-flex items-center gap-2 text-sm font-medium text-celebra-dark/70">
           <Eye size={16} /> Apercu

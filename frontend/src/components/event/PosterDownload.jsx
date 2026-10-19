@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Loader2, Download, Share2, QrCode, RefreshCw } from 'lucide-react';
+import { Loader2, Download, Share2, QrCode, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage } from '../../services/api.js';
@@ -99,6 +99,13 @@ export default function PosterDownload({
             <option value="bottom-center">{t('poster.positionCenter')}</option>
           </select>
         </div>
+      )}
+
+      {event.status !== 'published' && (
+        <p className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+          <AlertTriangle size={15} className="mt-0.5 shrink-0" />
+          <span>{t('poster.draftWarning')}</span>
+        </p>
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">

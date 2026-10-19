@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../hooks/useAuth.js';
 import { useLocalePath } from '../context/LocaleContext.jsx';
 import LanguageSwitcher from '../components/i18n/LanguageSwitcher.jsx';
+import ThemeToggle from '../components/ThemeToggle.jsx';
 
 export default function PublicLayout() {
   const { user, logout } = useAuth();
@@ -17,7 +18,7 @@ export default function PublicLayout() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <header className="sticky top-0 z-40 border-b border-celebra-dark/10 bg-white">
+      <header className="sticky top-0 z-40 border-b border-celebra-dark/10 bg-celebra-paper">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
           <Link to={lp('/')} className="font-heading text-lg font-bold text-celebra-gold">
             {t('common.appName')}
@@ -44,6 +45,7 @@ export default function PublicLayout() {
               </>
             )}
             <LanguageSwitcher />
+            <ThemeToggle />
           </nav>
         </div>
       </header>
@@ -52,7 +54,7 @@ export default function PublicLayout() {
         <Outlet />
       </main>
 
-      <footer className="border-t border-celebra-dark/10 bg-white py-6 text-center text-sm text-celebra-dark/60">
+      <footer className="border-t border-celebra-dark/10 bg-celebra-paper py-6 text-center text-sm text-celebra-dark/60">
         &copy; {new Date().getFullYear()} {t('common.appName')} — {t('common.footerTagline')}
       </footer>
     </div>

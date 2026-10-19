@@ -29,10 +29,17 @@ export const getPublicEvent = asyncHandler(async (req, res) => {
   const { slug } = req.params;
   const code = req.query.code ? String(req.query.code) : '';
 
-  const event = await findPublishedEvent(slug, { withAccessCode: true }).populate('templateId');
+  const event = await Event.findOne({ slug }).select('+accessCodeHash').populate('templateId');
 
   if (!event) {
-    throw ApiError.notFound('Evenement introuvable.');
+    throw ApiError.notFound('Evenement introuvable.', 'EVENT_NOT_FOUND');
+  }
+
+  if (event.status !== EVENT_STATUS.PUBLISHED) {
+    throw ApiError.notFound(
+      "Cet evenement n'est pas encore publie.",
+      'EVENT_NOT_PUBLISHED',
+    );
   }
 
   if (event.visibility === EVENT_VISIBILITY.PASSWORD) {

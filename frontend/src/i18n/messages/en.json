@@ -21,6 +21,10 @@
     "loading": "Loading...",
     "retry": "Retry",
     "close": "Close",
+    "notifications": "Notifications",
+    "markAllRead": "Mark all as read",
+    "noNotifications": "No notifications",
+    "toggleTheme": "Toggle theme",
     "actions": "Actions",
     "language": "Language",
     "chooseLanguage": "Choose language",
@@ -70,6 +74,14 @@
     "languageHint": "The language chosen here is used on all your devices.",
     "saved": "Profile updated successfully.",
     "verificationSent": "Verification email sent.",
+    "emailPending": "Pending confirmation: {email}",
+    "emailChangeRequested": "A confirmation email was sent to {email}.",
+    "passwordTitle": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordChanged": "Password updated.",
     "changePassword": "Change my password"
   },
   "editor": {
@@ -142,7 +154,8 @@
     "gallery": "Gallery",
     "photoAlt": "Photo {index}",
     "posterAlt": "Event poster",
-    "notFound": "Event not found."
+    "notFound": "Event not found.",
+    "notPublished": "This event is not published yet. Please try again once it is online."
   },
   "poster": {
     "caption": "To learn more and discover all the information, scan the QR code.",
@@ -156,6 +169,7 @@
     "positionLeft": "Bottom left",
     "positionCenter": "Bottom center",
     "noPoster": "No poster has been uploaded for this event.",
+    "draftWarning": "This event is not published yet: the QR code will only work after publishing.",
     "alt": "Poster for {title}"
   },
   "errors": {

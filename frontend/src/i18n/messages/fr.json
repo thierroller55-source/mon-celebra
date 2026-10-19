@@ -21,6 +21,10 @@
     "loading": "Chargement...",
     "retry": "Réessayer",
     "close": "Fermer",
+    "notifications": "Notifications",
+    "markAllRead": "Tout marquer comme lu",
+    "noNotifications": "Aucune notification",
+    "toggleTheme": "Changer de thème",
     "actions": "Actions",
     "language": "Langue",
     "chooseLanguage": "Choisir la langue",
@@ -70,6 +74,14 @@
     "languageHint": "La langue choisie ici est utilisée sur tous vos appareils.",
     "saved": "Profil mis à jour avec succès.",
     "verificationSent": "Email de vérification renvoyé.",
+    "emailPending": "En attente de confirmation : {email}",
+    "emailChangeRequested": "Un email de confirmation a été envoyé à {email}.",
+    "passwordTitle": "Changer le mot de passe",
+    "currentPassword": "Mot de passe actuel",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "passwordMismatch": "Les mots de passe ne correspondent pas.",
+    "passwordChanged": "Mot de passe mis à jour.",
     "changePassword": "Changer mon mot de passe"
   },
   "editor": {
@@ -142,7 +154,8 @@
     "gallery": "Galerie",
     "photoAlt": "Photo {index}",
     "posterAlt": "Affiche de l'événement",
-    "notFound": "Événement introuvable."
+    "notFound": "Événement introuvable.",
+    "notPublished": "Cet événement n'est pas encore publié. Réessayez dès qu'il sera en ligne."
   },
   "poster": {
     "caption": "Pour en savoir plus et découvrir toutes les informations, scannez le QR code.",
@@ -156,6 +169,7 @@
     "positionLeft": "Bas gauche",
     "positionCenter": "Bas centre",
     "noPoster": "Aucune affiche n'a été importée pour cet événement.",
+    "draftWarning": "Cet événement n'est pas encore publié : le QR code ne fonctionnera qu'après publication.",
     "alt": "Affiche de {title}"
   },
   "errors": {
