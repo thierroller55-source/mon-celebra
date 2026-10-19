@@ -27,6 +27,7 @@ import {
   createTemplate,
   updateTemplate,
   deleteTemplate,
+  emailHealth,
 } from '../controllers/admin.controller.js';
 
 const router = Router();
@@ -34,6 +35,8 @@ const router = Router();
 router.use(verifyToken, requireAdmin);
 
 router.get('/stats', getStats);
+
+router.post('/email-health', emailHealth);
 
 router.get('/users', listUsers);
 router.patch('/users/:id/block', blockUser);

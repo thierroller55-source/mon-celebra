@@ -32,7 +32,11 @@ export class ApiError extends Error {
     return new ApiError(409, message, code);
   }
 
-  static tooMany(message = 'Trop de requetes, reessayez plus tard.', code = 'RATE_LIMITED') {
-    return new ApiError(429, message, code);
+  static tooMany(message = 'Trop de requetes, reessayez plus tard.', code = 'RATE_LIMITED', details) {
+    return new ApiError(429, message, code, details);
+  }
+
+  static serviceUnavailable(message = 'Service temporairement indisponible.', code = 'SERVICE_UNAVAILABLE') {
+    return new ApiError(503, message, code);
   }
 }

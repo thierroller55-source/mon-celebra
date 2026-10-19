@@ -1,7 +1,10 @@
 import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { sendEmailVerification } from '../services/emailVerification.service.js';
+import {
+  sendEmailVerification,
+  canResendVerification,
+} from '../services/emailVerification.service.js';
 
 export const getMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id);
@@ -15,7 +18,7 @@ export const getMe = asyncHandler(async (req, res) => {
  * verification est envoye a la nouvelle adresse.
  */
 export const updateMe = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user.id).select('+emailVerificationSentAt');
   if (!user) throw ApiError.notFound('Utilisateur introuvable.');
 
   const { firstName, lastName, phone, language, email } = req.body;
@@ -40,13 +43,17 @@ export const updateMe = asyncHandler(async (req, res) => {
 
   await user.save({ validateBeforeSave: false });
 
+  let emailSent;
   if (emailChangeRequested) {
-    await sendEmailVerification(user, email);
+    // On attend l'envoi reel : le profil est deja enregistre, mais on indique
+    // honnetement au client si l'email de confirmation a pu partir.
+    const result = await sendEmailVerification(user, email, { strict: false });
+    emailSent = result.ok;
   }
 
   res.json({
     success: true,
-    data: { user: user.toJSON(), emailChangeRequested },
+    data: { user: user.toJSON(), emailChangeRequested, emailSent },
   });
 });
 

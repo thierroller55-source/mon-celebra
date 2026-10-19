@@ -15,7 +15,7 @@ import {
   hashResetToken,
 } from '../services/auth.service.js';
 import { sendEmailSafe } from '../services/mailer.service.js';
-import { sendEmailVerification } from '../services/emailVerification.service.js';
+import { sendEmailVerification, canResendVerification } from '../services/emailVerification.service.js';
 import { resetPasswordTemplate } from '../services/emailTemplates.js';
 
 function authPayload(user) {
@@ -30,9 +30,9 @@ function authPayload(user) {
  */
 async function sendVerificationEmail(user) {
   const target = user?.pendingEmail || user?.email;
-  if (!target) return;
-  if (!user.pendingEmail && user.isGuest) return;
-  await sendEmailVerification(user, target);
+  if (!target) return { ok: false };
+  if (!user.pendingEmail && user.isGuest) return { ok: false };
+  return sendEmailVerification(user, target);
 }
 
 export const register = asyncHandler(async (req, res) => {
@@ -163,8 +163,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
     // En dev, on expose le lien dans les logs (pratique sans boite mail).
     if (!env.isProduction) logger.info(`Lien de reinitialisation : ${resetUrl}`);
 
-    const { subject, html } = resetPasswordTemplate({ name: user.firstName, resetUrl });
-    await sendEmailSafe({ to: user.email, subject, html });
+    const { subject, html, text } = resetPasswordTemplate({
+      name: user.firstName,
+      resetUrl,
+      locale: user.language,
+    });
+    await sendEmailSafe({ to: user.email, subject, html, text, type: 'reset_password' });
   }
 
   // Reponse identique qu'un compte existe ou non (anti-enumeration).
@@ -212,15 +216,39 @@ export const verifyEmail = asyncHandler(async (req, res) => {
 });
 
 export const resendVerification = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user.id);
+  const user = await User.findById(req.user.id).select('+emailVerificationSentAt');
   if (!user || !user.isActive) throw ApiError.unauthorized();
 
-  if (user.emailVerified) {
+  if (user.emailVerified && !user.pendingEmail) {
     return res.json({ success: true, data: { message: 'Cet email est deja confirme.' } });
   }
 
-  await sendVerificationEmail(user);
-  res.json({ success: true, data: { message: 'Email de confirmation renvoye.' } });
+  const { allowed, retryAfterSeconds } = canResendVerification(user);
+  if (!allowed) {
+    throw ApiError.tooMany(
+      `Veuillez patienter ${retryAfterSeconds} seconde(s) avant de renvoyer l'email.`,
+      'RESEND_TOO_SOON',
+      { retryAfterSeconds },
+    );
+  }
+
+  // On attend reellement l'envoi : si le fournisseur echoue, on le dit (502)
+  // au lieu d'annoncer un faux succes.
+  const result = await sendEmailVerification(user, user.pendingEmail || user.email, {
+    strict: true,
+  });
+
+  if (result.skipped) {
+    throw ApiError.serviceUnavailable(
+      "L'envoi d'email n'est pas configure. Contactez le support.",
+      'EMAIL_NOT_CONFIGURED',
+    );
+  }
+
+  res.json({
+    success: true,
+    data: { message: 'Email de confirmation renvoye.', retryAfterSeconds: 60 },
+  });
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {

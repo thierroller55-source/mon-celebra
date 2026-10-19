@@ -28,6 +28,7 @@ const userSchema = new mongoose.Schema(
     resetTokenExpiresAt: { type: Date, select: false },
     emailVerificationTokenHash: { type: String, select: false },
     emailVerificationExpiresAt: { type: Date, select: false },
+    emailVerificationSentAt: { type: Date, select: false },
     lastLoginAt: { type: Date },
   },
   {

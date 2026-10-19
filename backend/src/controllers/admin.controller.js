@@ -10,6 +10,9 @@ import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as eventService from '../services/event.service.js';
 import { EVENT_STATUS, GUESTBOOK_STATUS } from '../config/constants.js';
+import { env } from '../config/env.js';
+import { sendEmail, maskEmail } from '../services/mailer.service.js';
+import { testEmailTemplate } from '../services/emailTemplates.js';
 
 function escapeRegex(value) {
   return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -235,4 +238,71 @@ export const deleteTemplate = asyncHandler(async (req, res) => {
   const template = await Template.findByIdAndDelete(req.params.id);
   if (!template) throw ApiError.notFound('Template introuvable.');
   res.json({ success: true, data: { message: 'Template supprime.' } });
+});
+
+/* ------------------------------ Email health ------------------------------ */
+
+/**
+ * Diagnostic email (admin uniquement). Renvoie l'etat de la configuration et,
+ * si `to` est fourni, tente un envoi reel dont le resultat est rapporte sans
+ * jamais exposer de secret.
+ */
+export const emailHealth = asyncHandler(async (req, res) => {
+  const to = req.body?.to || req.user.email;
+
+  const config = {
+    provider: 'brevo',
+    configured: env.brevo.enabled,
+    from: env.brevo.from,
+    fromName: env.brevo.fromName,
+    replyTo: env.brevo.replyTo || null,
+    clientUrl: env.clientUrl,
+  };
+
+  if (!env.brevo.enabled) {
+    return res.json({
+      success: true,
+      data: {
+        config,
+        send: { attempted: false, ok: false, reason: 'BREVO_API_KEY non configuree.' },
+      },
+    });
+  }
+
+  const { subject, html, text } = testEmailTemplate({
+    url: env.clientUrl,
+    locale: 'fr',
+  });
+
+  try {
+    const result = await sendEmail({
+      to,
+      subject,
+      html,
+      text,
+      type: 'test',
+    });
+    return res.json({
+      success: true,
+      data: {
+        config,
+        send: {
+          attempted: true,
+          ok: !result?.skipped,
+          to: maskEmail(to),
+          providerMessageId: result?.messageId,
+        },
+      },
+    });
+  } catch (error) {
+    return res.status(502).json({
+      success: false,
+      message: error.message,
+      code: 'EMAIL_SEND_FAILED',
+      data: {
+        config,
+        send: { attempted: true, ok: false, to: maskEmail(to) },
+      },
+    });
+  }
 });

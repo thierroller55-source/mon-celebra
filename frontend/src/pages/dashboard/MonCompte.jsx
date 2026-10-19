@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useLocale } from '../../context/LocaleContext.jsx';
@@ -8,6 +8,7 @@ import { authService } from '../../services/auth.service.js';
 import { LANGUAGE_NAMES } from '../../i18n/config.js';
 
 const EMPTY_PASSWORD = { currentPassword: '', newPassword: '', confirmPassword: '' };
+const RESEND_COOLDOWN = 60;
 
 export default function MonCompte() {
   const { user, setUser } = useAuth();
@@ -19,6 +20,8 @@ export default function MonCompte() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [sending, setSending] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const cooldownRef = useRef(null);
 
   const [passwords, setPasswords] = useState(EMPTY_PASSWORD);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -36,6 +39,22 @@ export default function MonCompte() {
     }
   }, [user]);
 
+  useEffect(() => () => clearInterval(cooldownRef.current), []);
+
+  const startCooldown = (seconds = RESEND_COOLDOWN) => {
+    setCooldown(seconds);
+    clearInterval(cooldownRef.current);
+    cooldownRef.current = setInterval(() => {
+      setCooldown((c) => {
+        if (c <= 1) {
+          clearInterval(cooldownRef.current);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+  };
+
   const handleChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
     setError('');
@@ -48,7 +67,7 @@ export default function MonCompte() {
     setError('');
     setSuccess('');
     try {
-      const { user: updated, emailChangeRequested } = await userService.updateMe({
+      const { user: updated, emailChangeRequested, emailSent } = await userService.updateMe({
         firstName: form.firstName,
         lastName: form.lastName,
         phone: form.phone,
@@ -56,11 +75,15 @@ export default function MonCompte() {
         email: form.email,
       });
       setUser(updated);
-      setSuccess(
-        emailChangeRequested
-          ? t('account.emailChangeRequested', { email: form.email })
-          : t('account.saved'),
-      );
+      if (emailChangeRequested && emailSent === false) {
+        setError(t('account.emailChangeFailed', { email: form.email }));
+      } else {
+        setSuccess(
+          emailChangeRequested
+            ? t('account.emailChangeRequested', { email: form.email })
+            : t('account.saved'),
+        );
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -100,14 +123,17 @@ export default function MonCompte() {
   };
 
   const handleResendVerification = async () => {
-    if (user?.emailVerified) return;
+    if (user?.emailVerified || sending || cooldown > 0) return;
     setSending(true);
     setError('');
     setSuccess('');
     try {
       await authService.resendVerification();
       setSuccess(t('account.verificationSent'));
+      startCooldown();
     } catch (err) {
+      // Le serveur renvoie 502 si le fournisseur a refuse l'envoi : on
+      // n'affiche jamais de faux succes.
       setError(getErrorMessage(err));
     } finally {
       setSending(false);
@@ -124,9 +150,10 @@ export default function MonCompte() {
         </p>
       )}
       {success && (
-        <p role="alert" className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
-          {success}
-        </p>
+        <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
+          <p>{success}</p>
+          <p className="mt-1 text-xs text-green-700/80">{t('account.checkSpam')}</p>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="card space-y-4 p-6">
@@ -177,10 +204,14 @@ export default function MonCompte() {
               <button
                 type="button"
                 onClick={handleResendVerification}
-                disabled={sending}
-                className="ml-2 font-medium text-celebra-gold hover:underline"
+                disabled={sending || cooldown > 0}
+                className="ml-2 font-medium text-celebra-gold hover:underline disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {sending ? t('account.sending') : t('account.resendVerification')}
+                {sending
+                  ? t('account.sending')
+                  : cooldown > 0
+                    ? t('account.resendIn', { seconds: cooldown })
+                    : t('account.resendVerification')}
               </button>
             )}
           </p>
