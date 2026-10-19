@@ -91,7 +91,7 @@ test('verify-email : confirme le nouvel email et convertit le compte invite', as
   assert.equal(me.body.data.pendingEmail, next);
 
   const user = await User.findById(me.body.data._id);
-  const token = await sendEmailVerification(user, next);
+  const { token } = await sendEmailVerification(user, next);
   assert.ok(token);
 
   const verified = await api.post('/auth/verify-email', { token });

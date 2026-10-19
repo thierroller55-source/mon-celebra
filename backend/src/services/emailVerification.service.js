@@ -40,10 +40,10 @@ export async function sendEmailVerification(user, email = user.email, { strict =
 
   try {
     const result = await sendEmail({ to: email, subject, html, text, type: 'verify_email' });
-    return { ok: !result?.skipped, skipped: result?.skipped, providerMessageId: result?.messageId };
+    return { ok: !result?.skipped, skipped: result?.skipped, providerMessageId: result?.messageId, token };
   } catch (error) {
     if (strict) throw error;
-    return { ok: false, message: error.message };
+    return { ok: false, message: error.message, token };
   }
 }
 
