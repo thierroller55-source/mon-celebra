@@ -155,7 +155,8 @@
     "photoAlt": "Photo {index}",
     "posterAlt": "Event poster",
     "notFound": "Event not found.",
-    "notPublished": "This event is not published yet. Please try again once it is online."
+    "notPublished": "This event is not published yet. Please try again once it is online.",
+    "connectionHelp": "If this page does not open, try another browser or another connection."
   },
   "poster": {
     "caption": "To learn more and discover all the information, scan the QR code.",

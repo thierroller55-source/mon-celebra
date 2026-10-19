@@ -155,7 +155,8 @@
     "photoAlt": "Nataal {index}",
     "posterAlt": "Afiis bu evenman bi",
     "notFound": "Ñu koo fekkul evenman bi.",
-    "notPublished": "Feeñuloo evenman bii. Jéemaat bu ñu koo feeñal."
+    "notPublished": "Feeñuloo evenman bii. Jéemaat bu ñu koo feeñal.",
+    "connectionHelp": "Su xët bii ubbeeku, jéemaat ak beneen navigatër walla beneen koneksiyoŋ."
   },
   "poster": {
     "caption": "Ngir xam lu ëpp ak gis xibaar yi lépp, skane kodu QR bi.",

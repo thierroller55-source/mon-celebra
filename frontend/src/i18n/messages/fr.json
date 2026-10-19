@@ -155,7 +155,8 @@
     "photoAlt": "Photo {index}",
     "posterAlt": "Affiche de l'événement",
     "notFound": "Événement introuvable.",
-    "notPublished": "Cet événement n'est pas encore publié. Réessayez dès qu'il sera en ligne."
+    "notPublished": "Cet événement n'est pas encore publié. Réessayez dès qu'il sera en ligne.",
+    "connectionHelp": "Si cette page ne s'ouvre pas, essayez avec un autre navigateur ou une autre connexion."
   },
   "poster": {
     "caption": "Pour en savoir plus et découvrir toutes les informations, scannez le QR code.",

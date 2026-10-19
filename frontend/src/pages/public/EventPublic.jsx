@@ -32,8 +32,23 @@ export default function EventPublic() {
     setError('');
     setErrorCode('');
 
-    publicService
-      .getEvent(slug, code)
+    // Le backend gratuit (Render) s'endort : le premier appel apres une longue
+    // inactivite peut prendre plusieurs secondes (cold start). On reessaie
+    // automatiquement sur les erreurs reseau / delais avant d'afficher l'erreur.
+    const isRetryable = (err) =>
+      !err?.response || err?.code === 'ECONNABORTED' || err?.response?.status >= 500;
+
+    const attempt = (triesLeft) =>
+      publicService.getEvent(slug, code).catch((err) => {
+        if (triesLeft > 0 && isRetryable(err)) {
+          return new Promise((resolve) =>
+            setTimeout(resolve, (3 - triesLeft) * 1500),
+          ).then(() => attempt(triesLeft - 1));
+        }
+        throw err;
+      });
+
+    attempt(2)
       .then((data) => {
         if (!active) return;
         setEvent(data);
@@ -115,6 +130,8 @@ export default function EventPublic() {
   }
 
   if (error || !event) {
+    const isNetwork =
+      !errorCode && /contact|connexion|r.{0,3}seau|temps/i.test(error || '');
     const message =
       errorCode === 'EVENT_NOT_PUBLISHED'
         ? t('publicPage.notPublished')
@@ -138,6 +155,9 @@ export default function EventPublic() {
             <RefreshCw size={15} /> {t('common.retry')}
           </button>
         </div>
+        {isNetwork && (
+          <p className="text-xs text-celebra-dark/50">{t('publicPage.connectionHelp')}</p>
+        )}
       </div>
     );
   }

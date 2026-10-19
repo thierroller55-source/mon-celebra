@@ -17,6 +17,8 @@ const router = Router();
 
 const DB_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 
+// Ping instantane, sans aucun acces base : sert au keep-alive (anti veille
+// Render) et au diagnostic. Repond en quelques millisecondes meme a froid.
 router.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -25,6 +27,8 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+router.head('/health', (req, res) => res.status(204).end());
 
 // Auth & profil
 router.use('/auth', authRoutes);
