@@ -19,6 +19,7 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    background-color: rgb(var(--c-surface));
   }
 
   body {
