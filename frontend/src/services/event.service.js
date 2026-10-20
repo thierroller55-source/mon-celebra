@@ -34,6 +34,10 @@ export const eventService = {
   listRsvp: (id) => api.get(`/events/${id}/rsvp`).then((r) => r.data.data),
   exportRsvp: (id) =>
     api.get(`/events/${id}/rsvp/export`, { responseType: 'blob' }).then((r) => r.data),
+  respondRsvp: (id, rsvpId, hostResponse) =>
+    api
+      .patch(`/events/${id}/rsvp/${rsvpId}/reply`, { hostResponse })
+      .then((r) => r.data.data.rsvp),
 
   listGuestbook: (id) =>
     api.get(`/events/${id}/guestbook`).then((r) => r.data.data.messages),

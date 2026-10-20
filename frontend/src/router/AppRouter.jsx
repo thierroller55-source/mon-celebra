@@ -10,6 +10,7 @@ import { isLocale } from '../i18n/config.js';
 import Home from '../pages/Home.jsx';
 import Login from '../pages/auth/Login.jsx';
 import Register from '../pages/auth/Register.jsx';
+import Signup from '../pages/auth/Signup.jsx';
 import ForgotPassword from '../pages/auth/ForgotPassword.jsx';
 import ResetPassword from '../pages/auth/ResetPassword.jsx';
 import VerifyEmail from '../pages/auth/VerifyEmail.jsx';
@@ -57,6 +58,7 @@ function renderRouteTree() {
         <Route path="e/:slug" element={<EventPublic />} />
         <Route path="connexion" element={<Login />} />
         <Route path="inscription" element={<Register />} />
+        <Route path="inscription-invite" element={<Signup />} />
         <Route path="mot-de-passe-oublie" element={<ForgotPassword />} />
         <Route path="reinitialiser-mot-de-passe/:token" element={<ResetPassword />} />
         <Route path="verifier-email/:token" element={<VerifyEmail />} />

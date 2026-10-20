@@ -12,6 +12,7 @@ import {
 } from '../validators/auth.schema.js';
 import {
   register,
+  signup,
   login,
   logout,
   refresh,
@@ -26,6 +27,8 @@ const router = Router();
 
 // Inscription reservee aux administrateurs (amorcage du premier compte inclus).
 router.post('/register', authLimiter, requireAdminOrBootstrap, validate(registerSchema), register);
+// Inscription publique d'un visiteur (compte "user").
+router.post('/signup', authLimiter, validate(registerSchema), signup);
 router.post('/login', authLimiter, validate(loginSchema), login);
 router.post('/logout', logout);
 router.post('/refresh', authLimiter, refresh);

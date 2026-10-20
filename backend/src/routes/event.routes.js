@@ -5,6 +5,7 @@ import { validate } from '../middleware/validate.js';
 import { uploadMultiple, uploadPoster } from '../middleware/upload.js';
 import { createEventSchema, updateEventSchema } from '../validators/event.schema.js';
 import { guestbookModerationSchema } from '../validators/guestbook.schema.js';
+import { hostRsvpResponseSchema } from '../validators/rsvp.schema.js';
 import {
   listEvents,
   createEvent,
@@ -17,6 +18,7 @@ import {
   removePhoto,
   listRsvp,
   exportRsvp,
+  respondRsvp,
   listGuestbook,
   moderateGuestbook,
   deleteGuestbookMessage,
@@ -52,6 +54,12 @@ router.get('/:id/poster', requireEventOwner, getEventPoster);
 
 router.get('/:id/rsvp', requireEventOwner, listRsvp);
 router.get('/:id/rsvp/export', requireEventOwner, exportRsvp);
+router.patch(
+  '/:id/rsvp/:rsvpId/reply',
+  requireEventOwner,
+  validate(hostRsvpResponseSchema),
+  respondRsvp,
+);
 
 router.get('/:id/guestbook', requireEventOwner, listGuestbook);
 router.patch(

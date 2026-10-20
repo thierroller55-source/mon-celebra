@@ -30,7 +30,7 @@ if (!i18next.isInitialized) {
     fallbackLng: DEFAULT_LOCALE,
     supportedLngs: LOCALES,
     resources: { [DEFAULT_LOCALE]: { translation: fr } },
-    interpolation: { escapeValue: false },
+    interpolation: { escapeValue: false, prefix: '{', suffix: '}' },
     returnNull: false,
     returnEmptyString: false,
     saveMissing: false,

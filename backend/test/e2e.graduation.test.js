@@ -127,17 +127,52 @@ test('parcours complet Graduation : creation, persistance, publication, page pub
   assert.match(icsText, /BEGIN:VCALENDAR/);
   assert.match(icsText, /SUMMARY:Remise de diplome de Awa/);
 
-  // 11. RSVP + statistiques
-  const rsvp = await api.post(`/public/events/${event.slug}/rsvp`, {
-    name: 'Moussa',
+  // 11. RSVP + statistiques : le visiteur doit etre un compte connecte
+  const visitor = createApiClient(`http://127.0.0.1:${server.address().port}/api`);
+  const reg = await visitor.post('/auth/register', {
+    firstName: 'Moussa',
+    lastName: 'Ndiaye',
+    email: `moussa-${Date.now()}@example.com`,
+    password: 'Str0ng!Pass',
+    phone: '+221770000000',
+  });
+  assert.equal(reg.status, 201);
+  visitor.setToken(reg.body.data.accessToken);
+
+  const rsvp = await visitor.post(`/public/events/${event.slug}/rsvp`, {
     response: 'yes',
     guestsCount: 2,
   });
   assert.equal(rsvp.status, 201);
+  assert.equal(rsvp.body.data.rsvp.name, 'Moussa Ndiaye');
+  assert.equal(rsvp.body.data.rsvp.email.startsWith('moussa-'), true);
+
   const rsvpList = await api.get(`/events/${event._id}/rsvp`);
   assert.equal(rsvpList.status, 200);
   assert.equal(rsvpList.body.data.rsvps.length, 1);
   assert.equal(rsvpList.body.data.stats.rsvpYes, 1);
+
+  // 11b. L'hote accepte la presence : le visiteur voit la reponse
+  const reply = await api.patch(`/events/${event._id}/rsvp/${rsvp.body.data.rsvp._id}/reply`, {
+    hostResponse: 'accepted',
+  });
+  assert.equal(reply.status, 200);
+  assert.equal(reply.body.data.rsvp.hostResponse, 'accepted');
+  assert.ok(reply.body.data.rsvp.hostRespondedAt);
+
+  const myRsvp = await visitor.get(`/public/events/${event.slug}/my-rsvp`);
+  assert.equal(myRsvp.status, 200);
+  assert.equal(myRsvp.body.data.rsvp.hostResponse, 'accepted');
+
+  // 11c. Une session invite anonyme ne peut pas confirmer
+  const anonymous = createApiClient(`http://127.0.0.1:${server.address().port}/api`);
+  const guestSession = await anonymous.post('/auth/guest');
+  anonymous.setToken(guestSession.body.data.accessToken);
+  const refused = await anonymous.post(`/public/events/${event.slug}/rsvp`, {
+    response: 'yes',
+  });
+  assert.equal(refused.status, 403);
+  assert.equal(refused.body.code, 'ACCOUNT_REQUIRED');
 
   // 12. Livre d'or : moderation
   const gb = await api.post(`/public/events/${event.slug}/guestbook`, {

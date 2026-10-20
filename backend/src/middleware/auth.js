@@ -36,4 +36,22 @@ export function verifyToken(req, res, next) {
   }
 }
 
+/**
+ * Variante tolerante : attache req.user si un token valide est present, mais
+ * ne bloque JAMAIS la requete sinon. Utile pour les pages publiques qui
+ * enrichissent l'affichage quand le visiteur est connecte (ex : son propre
+ * RSVP sur la page d'un evenement).
+ */
+export function optionalAuth(req, res, next) {
+  const token = extractToken(req);
+  if (!token) return next();
+  try {
+    const payload = jwt.verify(token, env.JWT_SECRET);
+    req.user = { id: payload.sub, role: payload.role };
+  } catch {
+    // Token absent/expire : on reste en anonyme, sans erreur.
+  }
+  return next();
+}
+
 

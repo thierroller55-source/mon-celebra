@@ -67,6 +67,36 @@ export const register = asyncHandler(async (req, res) => {
 });
 
 /**
+ * Inscription PUBLIQUE d'un visiteur (role "user"). Cree un vrai compte
+ * (isGuest=false) afin qu'il puisse confirmer sa presence aux evenements.
+ * Un email de verification est envoye (best-effort).
+ */
+export const signup = asyncHandler(async (req, res) => {
+  const { firstName, lastName, email, password, phone } = req.body;
+
+  const existing = await User.findOne({ email });
+  if (existing) {
+    throw ApiError.conflict('Un compte existe deja avec cet email.', 'EMAIL_TAKEN');
+  }
+
+  const passwordHash = await User.hashPassword(password);
+  const user = await User.create({
+    firstName,
+    lastName,
+    email,
+    passwordHash,
+    phone,
+    role: ROLES.USER,
+    isGuest: false,
+  });
+
+  await sendVerificationEmail(user);
+
+  setRefreshCookie(res, user);
+  return res.status(201).json({ success: true, data: authPayload(user) });
+});
+
+/**
  * Ouvre une session "invite" pour un client sans compte : reutilise la session
  * existante si un refresh cookie valide est present, sinon cree un compte
  * anonyme (isGuest) afin que l'organisateur puisse gerer ses evenements.

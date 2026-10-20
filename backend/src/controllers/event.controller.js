@@ -5,6 +5,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as eventService from '../services/event.service.js';
 import { fetchImageBytes } from '../services/storage.service.js';
+import { notify } from '../services/notification.service.js';
 
 export const listEvents = asyncHandler(async (req, res) => {
   const events = await Event.find({ ownerId: req.user.id }).sort({ createdAt: -1 });
@@ -93,6 +94,32 @@ export const listRsvp = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { rsvps, stats: req.event.stats } });
 });
 
+/** L'hote accepte ou refuse la presence d'un invite. */
+export const respondRsvp = asyncHandler(async (req, res) => {
+  const rsvp = await Rsvp.findOne({ _id: req.params.rsvpId, eventId: req.event._id });
+  if (!rsvp) throw ApiError.notFound('Confirmation introuvable.');
+
+  rsvp.hostResponse = req.body.hostResponse;
+  rsvp.hostRespondedAt = new Date();
+  await rsvp.save();
+
+  // Notification au visiteur pour qu'il voie la reponse de l'hote.
+  await notify({
+    userId: rsvp.userId,
+    type: 'rsvp',
+    title:
+      req.body.hostResponse === 'accepted'
+        ? 'Votre presence est confirmee'
+        : 'Votre presence est refusee',
+    message: `${req.event.title} : l'organisateur a ${
+      req.body.hostResponse === 'accepted' ? 'accepte' : 'refuse'
+    } votre confirmation.`,
+    link: `/e/${req.event.slug}`,
+  });
+
+  res.json({ success: true, data: { rsvp } });
+});
+
 function csvCell(value) {
   const text = String(value ?? '');
   return `"${text.replace(/"/g, '""')}"`;
@@ -101,15 +128,17 @@ function csvCell(value) {
 export const exportRsvp = asyncHandler(async (req, res) => {
   const rsvps = await Rsvp.find({ eventId: req.event._id }).sort({ createdAt: 1 });
 
-  const header = ['Nom', 'Telephone', 'Accompagnants', 'Reponse', 'Message', 'Date'];
+  const header = ['Nom', 'Email', 'Telephone', 'Accompagnants', 'Reponse', 'Reponse hote', 'Message', 'Date'];
   const lines = [header.join(',')];
   for (const r of rsvps) {
     lines.push(
       [
         csvCell(r.name),
+        csvCell(r.email),
         csvCell(r.phone),
         r.guestsCount,
         r.response,
+        csvCell(r.hostResponse || ''),
         csvCell(r.message),
         r.createdAt.toISOString(),
       ].join(','),

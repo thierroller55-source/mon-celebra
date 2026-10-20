@@ -2,6 +2,7 @@ import { api } from './api.js';
 
 export const authService = {
   register: (payload) => api.post('/auth/register', payload).then((r) => r.data.data),
+  signup: (payload) => api.post('/auth/signup', payload).then((r) => r.data.data),
   login: (payload) => api.post('/auth/login', payload).then((r) => r.data.data),
   guest: () => api.post('/auth/guest').then((r) => r.data.data),
   refresh: () => api.post('/auth/refresh').then((r) => r.data.data),

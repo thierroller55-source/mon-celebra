@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth.js';
 import { getErrorMessage } from '../../services/api.js';
 import PasswordField from '../../components/auth/PasswordField.jsx';
@@ -9,6 +9,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirect = searchParams.get('redirect');
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -37,7 +39,11 @@ export default function Login() {
     setSubmitting(true);
     try {
       const signedIn = await login({ email: form.email.trim(), password: form.password });
-      navigate(signedIn?.role === 'admin' ? '/admin' : '/dashboard');
+      if (redirect) {
+        navigate(redirect, { replace: true });
+      } else {
+        navigate(signedIn?.role === 'admin' ? '/admin' : '/dashboard');
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {

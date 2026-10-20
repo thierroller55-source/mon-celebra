@@ -24,6 +24,12 @@ export const RSVP_RESPONSE = Object.freeze({
   MAYBE: 'maybe',
 });
 
+/** Reponse de l'hote a un invite (visible par l'invite sur la page publique). */
+export const RSVP_HOST_RESPONSE = Object.freeze({
+  ACCEPTED: 'accepted',
+  DECLINED: 'declined',
+});
+
 export const GUESTBOOK_STATUS = Object.freeze({
   PENDING: 'pending',
   APPROVED: 'approved',

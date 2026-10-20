@@ -19,6 +19,7 @@ import { useToast } from '../../context/ToastContext.jsx';
 import PosterDownload from '../../components/event/PosterDownload.jsx';
 
 const RESPONSE_LABELS = { yes: 'Oui', no: 'Non', maybe: 'Peut-etre' };
+const HOST_RESPONSE_LABELS = { accepted: 'Accepte', declined: 'Refuse' };
 const STATUS_STYLES = {
   approved: 'bg-green-50 text-green-700',
   pending: 'bg-amber-50 text-amber-700',
@@ -103,6 +104,19 @@ export default function EventManage() {
     try {
       await eventService.deleteGuestbookMessage(id, msgId);
       setMessages((list) => list.filter((m) => m._id !== msgId));
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleRespond = async (rsvpId, hostResponse) => {
+    setBusyId(rsvpId);
+    try {
+      const updated = await eventService.respondRsvp(id, rsvpId, hostResponse);
+      setRsvps((list) => list.map((r) => (r._id === rsvpId ? updated : r)));
+      toast.success('Reponse envoyee.');
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -238,9 +252,10 @@ export default function EventManage() {
                     <th className="px-4 py-3">Nom</th>
                     <th className="px-4 py-3">Reponse</th>
                     <th className="px-4 py-3">Pers.</th>
-                    <th className="px-4 py-3">Telephone</th>
+                    <th className="px-4 py-3">Contact</th>
                     <th className="px-4 py-3">Message</th>
                     <th className="px-4 py-3">Date</th>
+                    <th className="px-4 py-3">Reponse hote</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -249,11 +264,48 @@ export default function EventManage() {
                       <td className="px-4 py-3 font-medium">{r.name}</td>
                       <td className="px-4 py-3">{RESPONSE_LABELS[r.response] || r.response}</td>
                       <td className="px-4 py-3">{r.guestsCount}</td>
-                      <td className="px-4 py-3 text-celebra-dark/60">{r.phone || '-'}</td>
+                      <td className="px-4 py-3 text-celebra-dark/60">
+                        <p>{r.email || '-'}</p>
+                        {r.phone && <p className="text-xs">{r.phone}</p>}
+                      </td>
                       <td className="max-w-[200px] truncate px-4 py-3 text-celebra-dark/60">
                         {r.message || '-'}
                       </td>
                       <td className="px-4 py-3 text-celebra-dark/50">{formatDate(r.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        {r.hostResponse ? (
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs ${
+                              r.hostResponse === 'accepted'
+                                ? 'bg-green-50 text-green-700'
+                                : 'bg-red-50 text-red-700'
+                            }`}
+                          >
+                            {HOST_RESPONSE_LABELS[r.hostResponse] || r.hostResponse}
+                          </span>
+                        ) : (
+                          <div className="flex gap-1">
+                            <button
+                              type="button"
+                              className="btn-outline px-2 py-1 text-green-700"
+                              title="Accepter"
+                              disabled={busyId === r._id}
+                              onClick={() => handleRespond(r._id, 'accepted')}
+                            >
+                              <Check size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline px-2 py-1 text-red-600"
+                              title="Refuser"
+                              disabled={busyId === r._id}
+                              onClick={() => handleRespond(r._id, 'declined')}
+                            >
+                              <X size={15} />
+                            </button>
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>

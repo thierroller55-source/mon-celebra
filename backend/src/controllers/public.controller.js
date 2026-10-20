@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { Event } from '../models/Event.js';
 import { Rsvp } from '../models/Rsvp.js';
+import { User } from '../models/User.js';
 import { GuestbookMessage } from '../models/GuestbookMessage.js';
 import { Report } from '../models/Report.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -66,10 +67,16 @@ export const getPublicEvent = asyncHandler(async (req, res) => {
   data.stats = { ...data.stats, views: (data.stats?.views ?? 0) + 1 };
   data.guestbook = guestbook;
 
+  // Si le visiteur est connecte, on rattache son propre RSVP (pour afficher
+  // sa reponse et celle de l'hote) sans exposer les reponses des autres.
+  if (req.user?.id) {
+    data.myRsvp = await Rsvp.findOne({ eventId: event._id, userId: req.user.id });
+  }
+
   res.json({ success: true, data: { event: data } });
 });
 
-/** RSVP d'un invite. */
+/** RSVP d'un invite connecte. */
 export const createRsvp = asyncHandler(async (req, res) => {
   const event = await findPublishedEvent(req.params.slug);
   if (!event) throw ApiError.notFound('Evenement introuvable.');
@@ -77,25 +84,70 @@ export const createRsvp = asyncHandler(async (req, res) => {
     throw ApiError.forbidden('Les confirmations sont fermees pour cet evenement.', 'RSVP_DISABLED');
   }
 
-  const rsvp = await Rsvp.create({ ...req.body, eventId: event._id, ipHash: hashIp(req.ip) });
+  // La confirmation exige un vrai compte Mon Celebra (pas une session invite
+  // anonyme) afin que l'hote dispose du nom, prenom, email et telephone.
+  const account = await User.findById(req.user.id);
+  if (!account || account.isGuest) {
+    throw ApiError.forbidden(
+      'Creez un compte pour confirmer votre presence.',
+      'ACCOUNT_REQUIRED',
+    );
+  }
 
-  const increment =
-    rsvp.response === RSVP_RESPONSE.YES
+  const previous = await Rsvp.findOne({ eventId: event._id, userId: account._id });
+
+  const payload = {
+    eventId: event._id,
+    userId: account._id,
+    name: `${account.firstName} ${account.lastName}`.trim(),
+    email: account.email,
+    phone: account.phone || undefined,
+    guestsCount: req.body.guestsCount,
+    response: req.body.response,
+    message: req.body.message,
+    ipHash: hashIp(req.ip),
+  };
+
+  const rsvp = previous
+    ? await Rsvp.findByIdAndUpdate(previous._id, payload, { new: true })
+    : await Rsvp.create(payload);
+
+  // Ajuste les compteurs : on retire l'ancienne reponse le cas echeant puis on
+  // ajoute la nouvelle, pour qu'une mise a jour ne double pas les statistiques.
+  const toIncrement = (response) =>
+    response === RSVP_RESPONSE.YES
       ? { 'stats.rsvpYes': 1 }
-      : rsvp.response === RSVP_RESPONSE.NO
+      : response === RSVP_RESPONSE.NO
         ? { 'stats.rsvpNo': 1 }
         : { 'stats.rsvpMaybe': 1 };
-  await Event.updateOne({ _id: event._id }, { $inc: increment });
+  const delta = { ...toIncrement(rsvp.response) };
+  if (previous && previous.response !== rsvp.response) {
+    const old = toIncrement(previous.response);
+    for (const [key, value] of Object.entries(old)) delta[key] = (delta[key] ?? 0) - value;
+  }
+  await Event.updateOne({ _id: event._id }, { $inc: delta });
 
   await notify({
     userId: event.ownerId,
     type: 'rsvp',
-    title: 'Nouvelle confirmation RSVP',
+    title: previous ? 'Confirmation mise a jour' : 'Nouvelle confirmation RSVP',
     message: `${rsvp.name} a repondu "${rsvp.response}" pour ${event.title}.`,
     link: `/dashboard/evenements/${event._id}`,
   });
 
-  res.status(201).json({ success: true, data: { rsvp } });
+  res.status(previous ? 200 : 201).json({ success: true, data: { rsvp } });
+});
+
+/** Renvoie le RSVP du visiteur connecte pour un evenement (ou null). */
+export const getMyRsvp = asyncHandler(async (req, res) => {
+  const event = await findPublishedEvent(req.params.slug);
+  if (!event) throw ApiError.notFound('Evenement introuvable.');
+
+  const rsvp = req.user?.id
+    ? await Rsvp.findOne({ eventId: event._id, userId: req.user.id })
+    : null;
+
+  res.json({ success: true, data: { rsvp } });
 });
 
 /** Message du livre d'or. */

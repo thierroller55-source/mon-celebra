@@ -9,6 +9,9 @@ export const publicService = {
   rsvp: (slug, payload) =>
     api.post(`/public/events/${slug}/rsvp`, payload).then((r) => r.data.data.rsvp),
 
+  myRsvp: (slug) =>
+    api.get(`/public/events/${slug}/my-rsvp`).then((r) => r.data.data.rsvp),
+
   guestbook: (slug, { authorName, message, file }) => {
     const formData = new FormData();
     formData.append('authorName', authorName);
