@@ -3,8 +3,8 @@
 > « Chaque moment mérite d'être célébré. »
 >
 > Document maître de référence — Version 1.1 — État d'implémentation
-> Statut : **phases 1 à 3 implémentées ; phase 4 (premium) non démarrée**
-> Dernière vérification : 29/10/2026 — 89 tests backend, 129 tests e2e Chromium, lint OK.
+> Statut : **phases 1 à 3 implémentées ; fondation Premium démarrée (plans, quotas, templates) ; paiement à venir**
+> Dernière vérification : 29/10/2026 — 92 tests backend, 129 tests e2e Chromium, lint OK.
 
 ---
 
@@ -287,7 +287,10 @@ validate, upload] -> controller -> service -> model (Mongoose) -> response JSON
   passwordHash: String,         // requis (jamais renvoyé)
   phone:     String,
   role:      String,            // enum: ['user','admin'], defaut 'user'
-  language:  String,            // enum: ['fr','en'], defaut 'fr'
+  plan:      String,            // enum: ['free','premium'], defaut 'free', index
+  premiumUntil: Date,           // expiration Premium (null = sans expiration)
+  premiumSource: String,        // 'manual' (admin) ou futur provider de paiement
+  language:  String,            // enum: ['fr','en','wo'], defaut 'fr'
   avatar:    { url, publicId },
   isActive:  Boolean,           // defaut true (blocage admin)
   emailVerified: Boolean,       // defaut false
@@ -591,7 +594,9 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 - Props normalisées → **changer de template ne perd aucune donnée**.
 - Templates de base : Mariage (Elegant, Romantic, Luxury, Modern, Minimal, Traditional) ; Anniversaire (Fun, Party, Elegant, Modern, Kids) ; Baptême (Baby, Elegant, Minimal, Floral).
 - Admin : activation/désactivation et ajout de templates.
-- `isPremium` préparé pour la phase 4 (sans logique de paiement en phase 1).
+- `isPremium` est appliqué côté backend : un compte gratuit ne peut pas choisir un template premium (`PREMIUM_REQUIRED`). Un template déjà utilisé reste modifiable après un downgrade.
+- Le sélecteur de modèle est disponible dans le formulaire de création/édition.
+- Paiement et abonnement automatique restent à implémenter ; l'activation Premium est manuelle via l'admin.
 
 ---
 
@@ -679,7 +684,7 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 - Erreurs vers le client toujours génériques (« Une erreur est survenue… »).
 - SEO public : title unique, meta description, URL propre, Open Graph par événement (cf. note §0).
 - Performance : lazy loading, pagination, cache géocodage, images optimisées, requêtes minimales.
-- Quotas gratuits : 3 événements actifs/utilisateur, 20 photos/événement, 3 Mo/photo avant compression.
+- Quotas dynamiques par formule : gratuit = 3 événements actifs et 20 photos/événement ; Premium = 25 événements actifs et 100 photos/événement. Taille max d'une photo : 3 Mo avant compression (toutes formules).
 
 ---
 
@@ -690,7 +695,7 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 | **1 — MVP** | Accueil, inscription, connexion, dashboard, création événement, mariage/anniversaire/baptême, templates, photos, lieu, géolocalisation, page publique, URL unique, QR, partage, responsive | Terminée |
 | **2 — v1.0** | RSVP, livre d'or, compte à rebours, confidentialité (3 niveaux), dashboard admin, gestion catégories/templates, SEO/Open Graph, statistiques | Terminée |
 | **3 — Catégories** | Graduation, fiançailles, soirée, baby shower, inauguration, événement pro, commémoration, autres | Terminée |
-| **4 — Premium** | Paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | À venir |
+| **4 — Premium** | Paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | **Fondation technique faite** (plans, quotas dynamiques, gating templates, toggle admin) ; paiement à venir |
 
 ---
 

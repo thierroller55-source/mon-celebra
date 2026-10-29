@@ -4,6 +4,7 @@ import { requireAdmin } from '../middleware/role.js';
 import { validate } from '../middleware/validate.js';
 import {
   reportStatusSchema,
+  userPlanSchema,
   categoryCreateSchema,
   categoryUpdateSchema,
   templateCreateSchema,
@@ -14,6 +15,7 @@ import {
   listUsers,
   blockUser,
   unblockUser,
+  updateUserPlan,
   deleteUser,
   listEvents,
   deleteEvent,
@@ -41,6 +43,7 @@ router.post('/email-health', emailHealth);
 router.get('/users', listUsers);
 router.patch('/users/:id/block', blockUser);
 router.patch('/users/:id/unblock', unblockUser);
+router.patch('/users/:id/plan', validate(userPlanSchema), updateUserPlan);
 router.delete('/users/:id', deleteUser);
 
 router.get('/events', listEvents);

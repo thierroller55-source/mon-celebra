@@ -2,11 +2,14 @@ import bcrypt from 'bcryptjs';
 import { Event } from '../models/Event.js';
 import { Rsvp } from '../models/Rsvp.js';
 import { GuestbookMessage } from '../models/GuestbookMessage.js';
+import { User } from '../models/User.js';
+import { Template } from '../models/Template.js';
 import { ApiError } from '../utils/ApiError.js';
 import { generateUniqueEventSlug } from './slug.service.js';
 import { processImage, processPoster } from './image.service.js';
 import { uploadImage, deleteImage } from './storage.service.js';
-import { QUOTAS, EVENT_STATUS, EVENT_VISIBILITY } from '../config/constants.js';
+import { getEntitlements } from './plan.service.js';
+import { EVENT_STATUS, EVENT_VISIBILITY } from '../config/constants.js';
 import { CATEGORY_FIELDS } from '../config/categoryFields.js';
 
 const ACTIVE_STATUSES = [
@@ -15,17 +18,59 @@ const ACTIVE_STATUSES = [
   EVENT_STATUS.UNPUBLISHED,
 ];
 
+async function loadEntitlements(ownerId) {
+  const owner = await User.findById(ownerId).select('plan premiumUntil');
+  return getEntitlements(owner);
+}
+
+function assertActiveEventQuota(activeCount, entitlements) {
+  const limit = entitlements.limits.maxActiveEvents;
+  if (activeCount >= limit) {
+    throw ApiError.forbidden(
+      `Limite de ${limit} evenements actifs atteinte (formule ${
+        entitlements.isPremium ? 'Premium' : 'gratuite'
+      }).`,
+      'QUOTA_REACHED',
+    );
+  }
+}
+
+/**
+ * Verifie qu'un template existe, correspond a la categorie et, s'il est
+ * premium, que le proprietaire y a droit. `currentTemplateId` permet de
+ * conserver un template premium deja utilise apres un downgrade.
+ */
+async function assertTemplateAllowed(templateId, category, entitlements, currentTemplateId = null) {
+  if (!templateId) return;
+
+  const template = await Template.findById(templateId);
+  if (!template || !template.isActive) {
+    throw ApiError.badRequest('Template introuvable ou inactif.', 'TEMPLATE_NOT_FOUND');
+  }
+  if (template.categorySlug !== category) {
+    throw ApiError.badRequest(
+      "Ce template ne correspond pas a la categorie de l'evenement.",
+      'TEMPLATE_CATEGORY_MISMATCH',
+    );
+  }
+
+  const unchanged = currentTemplateId && String(currentTemplateId) === String(templateId);
+  if (template.isPremium && !entitlements.isPremium && !unchanged) {
+    throw ApiError.forbidden(
+      'Ce template est reserve aux comptes Premium.',
+      'PREMIUM_REQUIRED',
+    );
+  }
+}
+
 export async function createEvent(ownerId, data) {
+  const entitlements = await loadEntitlements(ownerId);
   const activeCount = await Event.countDocuments({
     ownerId,
     status: { $in: ACTIVE_STATUSES },
   });
-  if (activeCount >= QUOTAS.MAX_ACTIVE_EVENTS) {
-    throw ApiError.forbidden(
-      `Limite de ${QUOTAS.MAX_ACTIVE_EVENTS} evenements actifs atteinte.`,
-      'QUOTA_REACHED',
-    );
-  }
+  assertActiveEventQuota(activeCount, entitlements);
+  await assertTemplateAllowed(data.templateId, data.category, entitlements);
 
   const slug = await generateUniqueEventSlug(data.title);
   const categoryConfig = CATEGORY_FIELDS[data.category] || {};
@@ -57,6 +102,16 @@ export async function createEvent(ownerId, data) {
 }
 
 export async function updateEvent(event, data) {
+  if (data.templateId) {
+    const entitlements = await loadEntitlements(event.ownerId);
+    await assertTemplateAllowed(
+      data.templateId,
+      data.category || event.category,
+      entitlements,
+      event.templateId,
+    );
+  }
+
   const { accessCode, ...rest } = data;
   Object.assign(event, rest);
 
@@ -138,11 +193,15 @@ export async function removeMainImage(event) {
 }
 
 export async function addPhotos(event, files) {
+  const entitlements = await loadEntitlements(event.ownerId);
+  const limit = entitlements.limits.maxGalleryPhotos;
   const current = event.gallery?.length || 0;
-  const remaining = QUOTAS.MAX_GALLERY_PHOTOS - current;
+  const remaining = limit - current;
   if (remaining <= 0) {
     throw ApiError.badRequest(
-      `Limite de ${QUOTAS.MAX_GALLERY_PHOTOS} photos atteinte.`,
+      `Limite de ${limit} photos atteinte (formule ${
+        entitlements.isPremium ? 'Premium' : 'gratuite'
+      }).`,
       'GALLERY_FULL',
     );
   }
@@ -180,16 +239,13 @@ export async function removePhoto(event, photoId) {
 }
 
 export async function duplicateEvent(ownerId, event) {
+  const entitlements = await loadEntitlements(ownerId);
   const activeCount = await Event.countDocuments({
     ownerId,
     status: { $in: ACTIVE_STATUSES },
   });
-  if (activeCount >= QUOTAS.MAX_ACTIVE_EVENTS) {
-    throw ApiError.forbidden(
-      `Limite de ${QUOTAS.MAX_ACTIVE_EVENTS} evenements actifs atteinte.`,
-      'QUOTA_REACHED',
-    );
-  }
+  assertActiveEventQuota(activeCount, entitlements);
+  await assertTemplateAllowed(event.templateId, event.category, entitlements);
 
   const baseTitle = event.title || 'Evenement duplique';
   const title = `${baseTitle} (copie)`;

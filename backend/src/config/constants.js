@@ -91,9 +91,35 @@ export const DEFAULT_DESIGN = Object.freeze({
   background: '#FFFFFF',
 });
 
+export const PLANS = Object.freeze({
+  FREE: 'free',
+  PREMIUM: 'premium',
+});
+
+/**
+ * Avantages par formule. `premiumUntil` permet de faire expirer un abonnement
+ * sans supprimer l'historique du plan choisi.
+ */
+export const PLAN_LIMITS = Object.freeze({
+  [PLANS.FREE]: Object.freeze({
+    maxActiveEvents: 3,
+    maxGalleryPhotos: 20,
+    premiumTemplates: false,
+    advancedStats: false,
+    removeBranding: false,
+  }),
+  [PLANS.PREMIUM]: Object.freeze({
+    maxActiveEvents: 25,
+    maxGalleryPhotos: 100,
+    premiumTemplates: true,
+    advancedStats: true,
+    removeBranding: true,
+  }),
+});
+
 export const QUOTAS = Object.freeze({
-  MAX_ACTIVE_EVENTS: 3,
-  MAX_GALLERY_PHOTOS: 20,
+  MAX_ACTIVE_EVENTS: PLAN_LIMITS[PLANS.FREE].maxActiveEvents,
+  MAX_GALLERY_PHOTOS: PLAN_LIMITS[PLANS.FREE].maxGalleryPhotos,
   MAX_FILE_SIZE_MB: 3,
   MAX_POSTER_SIZE_MB: 8,
 });

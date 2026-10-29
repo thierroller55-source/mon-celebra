@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Crown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../hooks/useAuth.js';
 import { useLocale } from '../../context/LocaleContext.jsx';
@@ -22,6 +23,10 @@ export default function MonCompte() {
   const [sending, setSending] = useState(false);
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef(null);
+
+  const isPremium =
+    user?.plan === 'premium' &&
+    (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now());
 
   const [passwords, setPasswords] = useState(EMPTY_PASSWORD);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -143,6 +148,41 @@ export default function MonCompte() {
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold">{t('account.title')}</h1>
+
+      <div className="card mb-6 p-6">
+        <div className="flex flex-wrap items-center gap-2">
+          <Crown
+            size={20}
+            className={isPremium ? 'text-celebra-gold' : 'text-celebra-dark/40'}
+          />
+          <h2 className="text-lg font-semibold">{t('account.planTitle')}</h2>
+          <span
+            className={`rounded-full px-2 py-0.5 text-xs ${
+              isPremium
+                ? 'bg-celebra-gold/15 text-celebra-gold'
+                : 'bg-celebra-dark/5 text-celebra-dark/60'
+            }`}
+          >
+            {isPremium ? t('account.planPremium') : t('account.planFree')}
+          </span>
+        </div>
+        <p className="mt-2 text-sm text-celebra-dark/70">
+          {isPremium ? t('account.planPremiumHint') : t('account.planFreeHint')}
+        </p>
+        {isPremium ? (
+          <p className="mt-1 text-xs text-celebra-dark/60">
+            {user.premiumUntil
+              ? t('account.planUntil', {
+                  date: new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(
+                    new Date(user.premiumUntil),
+                  ),
+                })
+              : t('account.planLifetime')}
+          </p>
+        ) : (
+          <p className="mt-1 text-xs text-celebra-dark/60">{t('account.planUpgradeHint')}</p>
+        )}
+      </div>
 
       {error && (
         <p role="alert" className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">

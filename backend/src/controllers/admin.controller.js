@@ -9,7 +9,7 @@ import { Notification } from '../models/Notification.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as eventService from '../services/event.service.js';
-import { EVENT_STATUS, GUESTBOOK_STATUS } from '../config/constants.js';
+import { EVENT_STATUS, GUESTBOOK_STATUS, PLANS } from '../config/constants.js';
 import { env } from '../config/env.js';
 import { sendEmail, maskEmail } from '../services/mailer.service.js';
 import { testEmailTemplate } from '../services/emailTemplates.js';
@@ -106,6 +106,24 @@ export const blockUser = asyncHandler(async (req, res) => {
 export const unblockUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true });
   if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+  res.json({ success: true, data: { user } });
+});
+
+export const updateUserPlan = asyncHandler(async (req, res) => {
+  const { plan, premiumUntil } = req.body;
+  const user = await User.findById(req.params.id);
+  if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+
+  user.plan = plan;
+  if (plan === PLANS.PREMIUM) {
+    user.premiumUntil = premiumUntil ? new Date(premiumUntil) : null;
+    user.premiumSource = 'manual';
+  } else {
+    user.premiumUntil = null;
+    user.premiumSource = null;
+  }
+
+  await user.save();
   res.json({ success: true, data: { user } });
 });
 

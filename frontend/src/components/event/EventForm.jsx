@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Loader2, ImagePlus, X, LocateFixed, Link2, Loader } from 'lucide-react';
+import { Loader2, ImagePlus, X, LocateFixed, Link2, Loader, Crown, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CategoryForm from '../form/CategoryForm.jsx';
 import MapPicker from '../map/MapPicker.jsx';
 import AddressSearch from '../map/AddressSearch.jsx';
 import { PLACE_TYPES } from '../../utils/constants.js';
 import { geoService } from '../../services/geo.service.js';
+import { templateService } from '../../services/template.service.js';
 import { getErrorMessage } from '../../services/api.js';
+import { useAuth } from '../../hooks/useAuth.js';
 import { parseGoogleMapsUrl, isShortMapsLink, isValidLatLng } from '../../lib/geo.js';
 import { LOCALES, LANGUAGE_NAMES } from '../../i18n/config.js';
 
@@ -35,6 +37,7 @@ function buildInitial(categorySlug, event = null) {
     locationAddress: location.address || '',
     latitude: location.latitude != null ? String(location.latitude) : '',
     longitude: location.longitude != null ? String(location.longitude) : '',
+    templateId: event?.templateId?._id || event?.templateId || '',
     primaryColor: design.primaryColor || '#B08D57',
     secondaryColor: design.secondaryColor || '#1F2937',
     visibility: event?.visibility || 'public',
@@ -70,7 +73,11 @@ export default function EventForm({
   submitLabel,
 }) {
   const { t } = useTranslation();
+  const { user } = useAuth();
   const categorySlug = category?.slug;
+  const isPremium =
+    user?.plan === 'premium' &&
+    (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now());
   const [form, setForm] = useState(() => buildInitial(categorySlug, event));
   const [details, setDetails] = useState(() => event?.details || {});
   const [files, setFiles] = useState([]);
@@ -81,6 +88,8 @@ export default function EventForm({
   const [linkValue, setLinkValue] = useState('');
   const [linkBusy, setLinkBusy] = useState(false);
   const [locationNote, setLocationNote] = useState('');
+  const [templates, setTemplates] = useState([]);
+  const [templatesLoading, setTemplatesLoading] = useState(false);
 
   useEffect(() => {
     setForm(buildInitial(categorySlug, event));
@@ -100,7 +109,39 @@ export default function EventForm({
     [posterFile, posterPreview],
   );
 
+  useEffect(() => {
+    if (!categorySlug) {
+      setTemplates([]);
+      return undefined;
+    }
+    let active = true;
+    setTemplatesLoading(true);
+    templateService
+      .list(categorySlug)
+      .then((list) => {
+        if (active) setTemplates(list);
+      })
+      .catch(() => {
+        if (active) setTemplates([]);
+      })
+      .finally(() => {
+        if (active) setTemplatesLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [categorySlug]);
+
   const handleChange = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+
+  const selectTemplate = (tpl) => {
+    setForm((f) => ({
+      ...f,
+      templateId: tpl?._id || '',
+      ...(tpl?.layout?.primaryColor ? { primaryColor: tpl.layout.primaryColor } : {}),
+      ...(tpl?.layout?.secondaryColor ? { secondaryColor: tpl.layout.secondaryColor } : {}),
+    }));
+  };
 
   const handlePickLocation = (latitude, longitude) => {
     setLocationNote('');
@@ -200,6 +241,7 @@ export default function EventForm({
         secondaryColor: form.secondaryColor,
         customTexts: { headline: form.title.trim() },
       },
+      templateId: form.templateId || null,
       details: cleanedDetails,
     };
     if (form.tagline.trim()) payload.tagline = form.tagline.trim();
@@ -378,6 +420,79 @@ export default function EventForm({
         </Field>
       </section>
 
+      <section className="card space-y-4 p-6">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-semibold">{t('editor.templateSection')}</h2>
+          {!isPremium && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-celebra-gold/15 px-2 py-0.5 text-xs text-celebra-gold">
+              <Crown size={12} /> {t('editor.templatePremium')}
+            </span>
+          )}
+        </div>
+        <p className="text-sm text-celebra-dark/60">{t('editor.templateHint')}</p>
+
+        {templatesLoading ? (
+          <div className="flex items-center gap-2 text-sm text-celebra-dark/50">
+            <Loader2 className="animate-spin" size={15} /> {t('editor.templateLoading')}
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => selectTemplate(null)}
+              className={`flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm transition ${
+                !form.templateId
+                  ? 'border-celebra-gold bg-celebra-gold/5'
+                  : 'border-celebra-dark/15 hover:border-celebra-gold/60'
+              }`}
+            >
+              <span>{t('editor.templateDefault')}</span>
+              {!form.templateId && <Check size={16} className="text-celebra-gold" />}
+            </button>
+
+            {templates.map((tpl) => {
+              const locked = tpl.isPremium && !isPremium;
+              const selected = form.templateId === tpl._id;
+              return (
+                <button
+                  key={tpl._id}
+                  type="button"
+                  disabled={locked}
+                  onClick={() => selectTemplate(tpl)}
+                  title={locked ? t('editor.templateLocked') : undefined}
+                  aria-pressed={selected}
+                  className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition ${
+                    selected
+                      ? 'border-celebra-gold bg-celebra-gold/5'
+                      : 'border-celebra-dark/15 hover:border-celebra-gold/60'
+                  } ${locked ? 'cursor-not-allowed opacity-50' : ''}`}
+                >
+                  <span className="flex items-center gap-2">
+                    <span
+                      className="h-6 w-6 rounded-full border border-black/10"
+                      style={{
+                        background: `linear-gradient(135deg, ${
+                          tpl.layout?.primaryColor || '#B08D57'
+                        } 50%, ${tpl.layout?.secondaryColor || '#1F2937'} 50%)`,
+                      }}
+                    />
+                    <span>{tpl.name}</span>
+                  </span>
+                  <span className="flex items-center gap-1">
+                    {tpl.isPremium && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-celebra-gold/15 px-2 py-0.5 text-[11px] text-celebra-gold">
+                        {locked ? <Crown size={11} /> : null} {t('editor.templatePremium')}
+                      </span>
+                    )}
+                    {selected && <Check size={16} className="text-celebra-gold" />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       <CategoryForm
         category={category}
         value={details}
@@ -531,7 +646,7 @@ export default function EventForm({
         {mode === 'create' ? (
           <div>
             <label htmlFor="photos" className="label">
-              {t('editor.photos')}
+              {t('editor.photos', { max: isPremium ? 100 : 20 })}
             </label>
             <input
               id="photos"

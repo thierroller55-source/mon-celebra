@@ -6,6 +6,8 @@ export const adminService = {
   users: (params) => api.get('/admin/users', { params }).then((r) => r.data.data),
   blockUser: (id) => api.patch(`/admin/users/${id}/block`).then((r) => r.data.data.user),
   unblockUser: (id) => api.patch(`/admin/users/${id}/unblock`).then((r) => r.data.data.user),
+  updateUserPlan: (id, payload) =>
+    api.patch(`/admin/users/${id}/plan`, payload).then((r) => r.data.data.user),
   deleteUser: (id) => api.delete(`/admin/users/${id}`).then((r) => r.data.data),
 
   events: (params) => api.get('/admin/events', { params }).then((r) => r.data.data),

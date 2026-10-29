@@ -86,7 +86,15 @@
     "confirmPassword": "Dëggalal baatujàll bi",
     "passwordMismatch": "Baatujàll yi ñuñu ñaawal.",
     "passwordChanged": "Soppi nañu baatujàll bi.",
-    "changePassword": "Soppil sama baatujàll"
+    "changePassword": "Soppil sama baatujàll",
+    "planTitle": "Sama formule",
+    "planFree": "Moo xam",
+    "planPremium": "Premium",
+    "planFreeHint": "3 evenmaŋ yu dox, 20 nataal ci galeri.",
+    "planPremiumHint": "25 evenmaŋ yu dox, 100 nataal ci galeri ak melo Premium yi.",
+    "planUntil": "Premium ba ci {date}.",
+    "planLifetime": "Premium bi dox na sax.",
+    "planUpgradeHint": "Jëfandikoo Premium bi, ñu koy def ci loxo ba tey ci ekip Mon Celebra."
   },
   "editor": {
     "posterTitle": "Afiis bu evenman bi",
@@ -127,7 +135,7 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "gallerySection": "Nataal yi",
-    "photos": "Nataal (20 max, 3 Mo ci nataal)",
+    "photos": "Nataal (max {max}, 3 Mo ci nataal)",
     "photosCount": "{count} nataal yu ñu tann",
     "galleryHint": "Nataal yi ñu koy saytu ci xëtu saytu evenman bi.",
     "publicationSection": "Feeñ",
@@ -140,7 +148,13 @@
     "submitCreate": "Sos evenman",
     "submitSave": "Denc",
     "submitting": "Mu ngi denc...",
-    "cancel": "Bàyyi"
+    "cancel": "Bàyyi",
+    "templateSection": "Melo page bi",
+    "templateHint": "Tannal melo page publique bi. Melo Premium yi, ñi ngi leen di jot ci kont Premium.",
+    "templateDefault": "Melo bi ñu gwàccokke",
+    "templatePremium": "Premium",
+    "templateLocked": "Yëgal Premium ngir jëfandikoo melo bii.",
+    "templateLoading": "Mu ngi yeb melo yi..."
   },
   "publicPage": {
     "loading": "Evenman bi mu ngi ñów...",
