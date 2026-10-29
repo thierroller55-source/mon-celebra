@@ -2,8 +2,9 @@
 
 > « Chaque moment mérite d'être célébré. »
 >
-> Document maître de référence — Version 1.0 — Étape 1 (Architecture avant implémentation)
-> Statut : **en attente de validation**
+> Document maître de référence — Version 1.1 — État d'implémentation
+> Statut : **phases 1 à 3 implémentées ; phase 4 (premium) non démarrée**
+> Dernière vérification : 29/10/2026 — 89 tests backend, 129 tests e2e Chromium, lint OK.
 
 ---
 
@@ -23,7 +24,7 @@
 | QR Code | **bibliothèque `qrcode` (npm)** | Gratuit, génération serveur PNG/SVG | Service externe |
 | Email | **Nodemailer (SMTP) ou Resend/Brevo** — optionnel | Mot de passe oublié + notifications | Service payant |
 
-**Note SEO (point d'attention importante) :** une SPA React classique rend son contenu côté client. Les moteurs de recherche et l'aperçu de lien **WhatsApp/Facebook** lisent surtout les balises HTML initiales. Or le prompt exige des **balises Open Graph dynamiques par événement** (titre, description, image). Solution retenue sans changer de framework : le backend expose une petite route `/e/:slug` qui renvoie un **HTML avec métadonnées Open Graph injectées** puis redirige vers la SPA. Alternative plus propre à terme : migrer le rendu public vers **Next.js**. Décision à valider à l'étape « Page publique / SEO ».
+**Note SEO (point d'attention importante) :** une SPA React classique rend son contenu côté client. Les moteurs de recherche et l'aperçu de lien **WhatsApp/Facebook** lisent surtout les balises HTML initiales. Or le prompt exige des **balises Open Graph dynamiques par événement** (titre, description, image). Solution implémentée sans changer de framework : la route backend `GET /api/share/e/:slug` renvoie un **HTML avec métadonnées Open Graph** aux robots sociaux ; les navigateurs sont redirigés vers la SPA. Côté Vercel, des rewrites ciblent les user-agents des robots (`facebookexternalhit`, `WhatsApp`, `TelegramBot`, etc.) vers cette route. Alternative plus propre à terme : migrer le rendu public vers **Next.js**.
 
 ---
 
@@ -512,6 +513,7 @@ details = {
 | Méthode | Route | Accès |
 |---|---|---|
 | GET | `/api/public/events/:slug` | Public (code si protégé) |
+| GET | `/api/share/e/:slug` | Robots sociaux (Open Graph) |
 | POST | `/api/public/events/:slug/rsvp` | Public + rate-limit |
 | POST | `/api/public/events/:slug/guestbook` | Public + rate-limit |
 | GET | `/api/public/events/:slug/calendar.ics` | Public |
@@ -685,9 +687,9 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 
 | Phase | Contenu | Statut |
 |---|---|---|
-| **1 — MVP** | Accueil, inscription, connexion, dashboard, création événement, mariage/anniversaire/baptême, templates, photos, lieu, géolocalisation, page publique, URL unique, QR, partage, responsive | À venir |
-| **2 — v1.0** | RSVP, livre d'or, compte à rebours, confidentialité (3 niveaux), dashboard admin, gestion catégories/templates, SEO/Open Graph, statistiques | À venir |
-| **3 — Catégories** | Graduation, fiançailles, soirée, baby shower, inauguration, événement pro, commémoration, autres | À venir |
+| **1 — MVP** | Accueil, inscription, connexion, dashboard, création événement, mariage/anniversaire/baptême, templates, photos, lieu, géolocalisation, page publique, URL unique, QR, partage, responsive | Terminée |
+| **2 — v1.0** | RSVP, livre d'or, compte à rebours, confidentialité (3 niveaux), dashboard admin, gestion catégories/templates, SEO/Open Graph, statistiques | Terminée |
+| **3 — Catégories** | Graduation, fiançailles, soirée, baby shower, inauguration, événement pro, commémoration, autres | Terminée |
 | **4 — Premium** | Paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | À venir |
 
 ---
@@ -703,4 +705,4 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 | Langue | Français au démarrage ; champ `language` prévu pour l'anglais |
 | Domaine | `moncelebra.com` (à confirmer au déploiement) |
 
-> Note SEO Open Graph dynamique : solution provisoire prévue (route HTML OG côté backend), à confirmer lors de l'étape « Page publique ».
+> Note SEO Open Graph dynamique : implémentée via `GET /api/share/e/:slug` + rewrites Vercel pour les robots sociaux (voir §0).

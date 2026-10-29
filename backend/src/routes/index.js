@@ -12,6 +12,7 @@ import reportRoutes from './report.routes.js';
 import adminRoutes from './admin.routes.js';
 import geoRoutes from './geo.routes.js';
 import notificationRoutes from './notification.routes.js';
+import shareRoutes from './share.routes.js';
 
 const router = Router();
 
@@ -49,6 +50,7 @@ router.use('/templates', templateRoutes);
 
 // Public (invites)
 router.use('/public', publicRoutes);
+router.use('/share', shareRoutes);
 router.use('/reports', reportRoutes);
 router.use('/geo', geoRoutes);
 router.use('/notifications', notificationRoutes);
