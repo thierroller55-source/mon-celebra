@@ -100,6 +100,21 @@ export default function Login() {
         <button type="submit" className="btn-primary w-full" disabled={submitting}>
           {submitting ? 'Connexion...' : 'Se connecter'}
         </button>
+        <button
+          type="button"
+          className="btn-outline w-full"
+          onClick={async () => {
+            setError('');
+            try {
+              await guest();
+              navigate('/dashboard');
+            } catch (err) {
+              setError(getErrorMessage(err));
+            }
+          }}
+        >
+          Continuer en tant qu'invité
+        </button>
       </form>
 
       <p className="mt-4 text-center text-sm text-celebra-dark/70">
