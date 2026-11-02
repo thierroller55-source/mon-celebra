@@ -317,50 +317,33 @@ export default function MonCompte() {
         {user?.isGuest ? (
           <p className="text-sm text-celebra-dark/60">{t('account.setPasswordHint')}</p>
         ) : (
-          <div>
-            <label htmlFor="currentPassword" className="label">
-              {t('account.currentPassword')}
-            </label>
-            <input
-              id="currentPassword"
-              name="currentPassword"
-              type="password"
-              autoComplete="current-password"
-              className="input"
-              value={passwords.currentPassword}
-              onChange={handlePasswordChange}
-            />
-          </div>
+          <PasswordField
+            id="currentPassword"
+            name="currentPassword"
+            label={t('account.currentPassword')}
+            autoComplete="current-password"
+            value={passwords.currentPassword}
+            onChange={handlePasswordChange}
+          />
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="newPassword" className="label">
-              {t('account.newPassword')}
-            </label>
-            <input
-              id="newPassword"
-              name="newPassword"
-              type="password"
-              autoComplete="new-password"
-              className="input"
-              value={passwords.newPassword}
-              onChange={handlePasswordChange}
-            />
-          </div>
-          <div>
-            <label htmlFor="confirmPassword" className="label">
-              {t('account.confirmPassword')}
-            </label>
-            <input
-              id="confirmPassword"
-              name="confirmPassword"
-              type="password"
-              className="input"
-              value={passwords.confirmPassword}
-              onChange={handlePasswordChange}
-            />
-          </div>
+          <PasswordField
+            id="newPassword"
+            name="newPassword"
+            label={t('account.newPassword')}
+            autoComplete="new-password"
+            value={passwords.newPassword}
+            onChange={handlePasswordChange}
+          />
+          <PasswordField
+            id="confirmPassword"
+            name="confirmPassword"
+            label={t('account.confirmPassword')}
+            autoComplete="new-password"
+            value={passwords.confirmPassword}
+            onChange={handlePasswordChange}
+          />
         </div>
 
         <button type="submit" className="btn-outline" disabled={savingPassword}>
