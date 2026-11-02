@@ -45,7 +45,7 @@ export default function PublicLayout() {
               </>
             )}
             <a
-              href="https://wa.me/221765711533"
+              href="https://wa.me/221765711533?text=Bonjour%2C%20je%20souhaite%20avoir%20plus%20d%27informations%20sur%20votre%20site%20Mon%20Celebra."
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-celebra-dark/10 text-green-600 hover:bg-celebra-gold/10"
@@ -70,7 +70,7 @@ export default function PublicLayout() {
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 sm:flex-row sm:justify-between">
           <p>&copy; {new Date().getFullYear()} {t('common.appName')} — {t('common.footerTagline')}</p>
           <a
-            href="https://wa.me/221765711533"
+            href="https://wa.me/221765711533?text=Bonjour%2C%20je%20souhaite%20avoir%20plus%20d%27informations%20sur%20votre%20site%20Mon%20Celebra."
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-celebra-gold hover:underline"
