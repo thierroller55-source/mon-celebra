@@ -5,6 +5,14 @@ import { defineConfig } from '@playwright/test';
 // pour les invites qui scannent un QR code). Surcharger avec BASE_URL=...
 const BASE_URL = process.env.BASE_URL || 'https://mon-celebra.vercel.app';
 
+// WebKit est optionnel : il exige des dependances systeme
+// (`sudo npx playwright install-deps`) absentes de certains environnements.
+// L'activer avec PLAYWRIGHT_WEBKIT=1.
+const projects = [{ name: 'chromium', use: { browserName: 'chromium' } }];
+if (process.env.PLAYWRIGHT_WEBKIT === '1') {
+  projects.push({ name: 'webkit', use: { browserName: 'webkit' } });
+}
+
 export default defineConfig({
   testDir: './tests/e2e',
   timeout: 60000,
@@ -14,8 +22,5 @@ export default defineConfig({
     baseURL: BASE_URL,
     ignoreHTTPSErrors: true,
   },
-  projects: [
-    { name: 'chromium', use: { browserName: 'chromium' } },
-    { name: 'webkit', use: { browserName: 'webkit' } },
-  ],
+  projects,
 });

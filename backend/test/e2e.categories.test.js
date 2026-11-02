@@ -177,7 +177,7 @@ for (const slug of Object.keys(SAMPLES)) {
     assert.equal(publicRes.status, 200);
     assert.deepEqual(publicRes.body.data.event.details, details);
 
-    // Nettoyage (respect du quota de 3 evenements actifs)
+    // Nettoyage (respect du quota d'evenements actifs de la formule gratuite)
     const removed = await api.delete(`/events/${event._id}`);
     assert.equal(removed.status, 200);
   });

@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Search, Loader2, Ban, CheckCircle2, Trash2 } from 'lucide-react';
+import { Search, Loader2, Ban, CheckCircle2, Trash2, Crown } from 'lucide-react';
 import { adminService } from '../../services/admin.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
+
+function isProActive(user) {
+  if (user?.plan !== 'pro') return false;
+  return !user.proUntil || new Date(user.proUntil).getTime() > Date.now();
+}
 
 export default function AdminUsers() {
   const toast = useToast();
@@ -40,6 +45,22 @@ export default function AdminUsers() {
         : await adminService.unblockUser(u._id);
       setUsers((list) => list.map((x) => (x._id === updated._id ? updated : x)));
       toast.success(updated.isActive ? 'Utilisateur reactive.' : 'Utilisateur bloque.');
+    } catch (err) {
+      toast.error(getErrorMessage(err));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handlePlan = async (u) => {
+    const premium = isProActive(u);
+    setBusyId(u._id);
+    try {
+      const updated = await adminService.updateUserPlan(u._id, {
+        plan: premium ? 'free' : 'pro',
+      });
+      setUsers((list) => list.map((x) => (x._id === updated._id ? updated : x)));
+      toast.success(premium ? 'Compte repasse en gratuit.' : 'Compte passe en Pro.');
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -96,6 +117,7 @@ export default function AdminUsers() {
                 <th className="px-4 py-3">Nom</th>
                 <th className="px-4 py-3">Email</th>
                 <th className="px-4 py-3">Role</th>
+                <th className="px-4 py-3">Formule</th>
                 <th className="px-4 py-3">Statut</th>
                 <th className="px-4 py-3 text-right">Actions</th>
               </tr>
@@ -121,6 +143,17 @@ export default function AdminUsers() {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
+                        isProActive(u)
+                          ? 'bg-celebra-gold/15 text-celebra-gold'
+                          : 'bg-celebra-dark/5 text-celebra-dark/60'
+                      }`}
+                    >
+                      {isProActive(u) ? 'Pro' : 'Gratuit'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs ${
                         u.isActive ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
                       }`}
                     >
@@ -129,6 +162,17 @@ export default function AdminUsers() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
+                      <button
+                        type="button"
+                        className={`btn-outline px-2 py-1 ${
+                          isProActive(u) ? 'text-celebra-dark/60' : 'text-celebra-gold'
+                        }`}
+                        title={isProActive(u) ? 'Repasser en gratuit' : 'Passer en Pro'}
+                        disabled={busyId === u._id}
+                        onClick={() => handlePlan(u)}
+                      >
+                        <Crown size={15} />
+                      </button>
                       <button
                         type="button"
                         className={`btn-outline px-2 py-1 ${u.isActive ? 'text-amber-700' : 'text-green-700'}`}

@@ -12,6 +12,8 @@ import reportRoutes from './report.routes.js';
 import adminRoutes from './admin.routes.js';
 import geoRoutes from './geo.routes.js';
 import notificationRoutes from './notification.routes.js';
+import shareRoutes from './share.routes.js';
+import upgradeRoutes from './upgrade.routes.js';
 
 const router = Router();
 
@@ -19,6 +21,10 @@ const DB_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 
 // Ping instantane, sans aucun acces base : sert au keep-alive (anti veille
 // Render) et au diagnostic. Repond en quelques millisecondes meme a froid.
+// HEAD declare avant GET : Express fait repondre les routes GET aux requetes
+// HEAD, donc une declaration GET en premier masquerait ce handler HEAD.
+router.head('/health', (req, res) => res.status(204).end());
+
 router.get('/health', (req, res) => {
   res.json({
     success: true,
@@ -27,8 +33,6 @@ router.get('/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
-
-router.head('/health', (req, res) => res.status(204).end());
 
 // Auth & profil
 router.use('/auth', authRoutes);
@@ -47,9 +51,11 @@ router.use('/templates', templateRoutes);
 
 // Public (invites)
 router.use('/public', publicRoutes);
+router.use('/share', shareRoutes);
 router.use('/reports', reportRoutes);
 router.use('/geo', geoRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/upgrades', upgradeRoutes);
 
 // Administration
 router.use('/admin', adminRoutes);

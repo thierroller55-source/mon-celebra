@@ -30,6 +30,7 @@ import {
   getEventPoster,
 } from '../controllers/event.controller.js';
 import { getEventQr } from '../controllers/qrcode.controller.js';
+import { forbidPlanFieldsOnEvent } from '../middleware/planFieldsGuard.js';
 
 const router = Router();
 

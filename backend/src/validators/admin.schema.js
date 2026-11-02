@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { USER_PLAN_IDS } from '../config/plans.js';
 
 export const reportStatusSchema = z.object({
   status: z.enum(['open', 'closed']),
@@ -10,6 +11,11 @@ const slugField = z
   .toLowerCase()
   .regex(/^[a-z0-9-]+$/, 'Slug invalide (a-z, 0-9 et tirets).')
   .max(60);
+
+export const userPlanSchema = z.object({
+  plan: z.enum(USER_PLAN_IDS),
+  proUntil: z.coerce.date().nullable().optional(),
+});
 
 export const categoryCreateSchema = z.object({
   name: z.string().trim().min(1).max(80),

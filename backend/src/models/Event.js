@@ -5,6 +5,7 @@ import {
   DEFAULT_DESIGN,
   LANGUAGES,
 } from '../config/constants.js';
+import { EVENT_PLANS, EVENT_PLAN_IDS } from '../config/plans.js';
 import {
   imageSchema,
   locationSchema,
@@ -66,6 +67,14 @@ const eventSchema = new mongoose.Schema(
       ref: 'User',
       default: null,
     },
+    plan: {
+      type: String,
+      enum: EVENT_PLAN_IDS,
+      default: EVENT_PLANS.FREE,
+      index: true,
+    },
+    premiumUntil: { type: Date, default: null },
+    legacy: { type: Boolean, default: false, index: true },
     language: {
       type: String,
       enum: LANGUAGES,

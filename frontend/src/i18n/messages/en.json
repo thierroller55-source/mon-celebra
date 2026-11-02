@@ -86,7 +86,15 @@
     "confirmPassword": "Confirm password",
     "passwordMismatch": "Passwords do not match.",
     "passwordChanged": "Password updated.",
-    "changePassword": "Change my password"
+    "changePassword": "Change my password",
+    "planTitle": "My plan",
+    "planFree": "Free",
+    "planPremium": "Pro",
+    "planFreeHint": "1 active event, 5 photos per gallery.",
+    "planPremiumHint": "50 active events, 20 photos per gallery and paid templates.",
+    "planUntil": "Pro until {date}.",
+    "planLifetime": "Pro active with no expiry date.",
+    "planUpgradeHint": "Pro activation is currently handled manually by the Mon Celebra team."
   },
   "editor": {
     "posterTitle": "Event poster",
@@ -127,7 +135,7 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "gallerySection": "Gallery",
-    "photos": "Photos (max 20, 3 MB per image)",
+    "photos": "Photos (max {max}, 3 MB per image)",
     "photosCount": "{count} photo(s) selected",
     "galleryHint": "The gallery is managed from the event management page.",
     "publicationSection": "Publication",
@@ -140,7 +148,13 @@
     "submitCreate": "Create event",
     "submitSave": "Save",
     "submitting": "Saving...",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "templateSection": "Page template",
+    "templateHint": "Choose the style of the public page. Premium templates are reserved for Premium accounts.",
+    "templateDefault": "Default style",
+    "templatePremium": "Premium",
+    "templateLocked": "Upgrade to Premium to use this template.",
+    "templateLoading": "Loading templates..."
   },
   "publicPage": {
     "loading": "Loading the event...",

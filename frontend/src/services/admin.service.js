@@ -6,6 +6,8 @@ export const adminService = {
   users: (params) => api.get('/admin/users', { params }).then((r) => r.data.data),
   blockUser: (id) => api.patch(`/admin/users/${id}/block`).then((r) => r.data.data.user),
   unblockUser: (id) => api.patch(`/admin/users/${id}/unblock`).then((r) => r.data.data.user),
+  updateUserPlan: (id, payload) =>
+    api.patch(`/admin/users/${id}/plan`, payload).then((r) => r.data.data.user),
   deleteUser: (id) => api.delete(`/admin/users/${id}`).then((r) => r.data.data),
 
   events: (params) => api.get('/admin/events', { params }).then((r) => r.data.data),
@@ -28,4 +30,11 @@ export const adminService = {
   updateTemplate: (id, payload) =>
     api.put(`/admin/templates/${id}`, payload).then((r) => r.data.data.template),
   deleteTemplate: (id) => api.delete(`/admin/templates/${id}`).then((r) => r.data.data),
+
+  plansRequests: (params) => api.get('/admin/plans/requests', { params }).then((r) => r.data.data.requests),
+  getPlanRequest: (id) => api.get(`/admin/plans/requests/${id}`).then((r) => r.data.data.request),
+  decidePlanRequest: (id, payload) => api.patch(`/admin/plans/requests/${id}`, payload).then((r) => r.data.data),
+  activatePlan: (payload) => api.post('/admin/plans/activate', payload).then((r) => r.data.data),
+  deactivatePlan: (payload) => api.post('/admin/plans/deactivate', payload).then((r) => r.data.data),
+  planAudits: (params) => api.get('/admin/plans/audits', { params }).then((r) => r.data.data.audits),
 };

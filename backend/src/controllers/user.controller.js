@@ -21,7 +21,14 @@ export const updateMe = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user.id).select('+emailVerificationSentAt');
   if (!user) throw ApiError.notFound('Utilisateur introuvable.');
 
-  const { firstName, lastName, phone, language, email } = req.body;
+  const allowed = {};
+  if (req.body.firstName !== undefined) allowed.firstName = req.body.firstName;
+  if (req.body.lastName !== undefined) allowed.lastName = req.body.lastName;
+  if (req.body.phone !== undefined) allowed.phone = req.body.phone;
+  if (req.body.language !== undefined) allowed.language = req.body.language;
+  if (req.body.email !== undefined) allowed.email = req.body.email;
+
+  const { firstName, lastName, phone, language, email } = allowed;
 
   if (firstName !== undefined) user.firstName = firstName;
   if (lastName !== undefined) user.lastName = lastName;

@@ -9,7 +9,6 @@ import fs from 'node:fs';
 //
 // Teste aussi les routes authentifiees si DEMO_EMAIL/DEMO_PASSWORD sont fournis.
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173';
 const DEMO_EMAIL = process.env.DEMO_EMAIL || '';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD || '';
 

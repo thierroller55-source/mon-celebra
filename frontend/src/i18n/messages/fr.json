@@ -86,7 +86,15 @@
     "confirmPassword": "Confirmer le mot de passe",
     "passwordMismatch": "Les mots de passe ne correspondent pas.",
     "passwordChanged": "Mot de passe mis à jour.",
-    "changePassword": "Changer mon mot de passe"
+    "changePassword": "Changer mon mot de passe",
+    "planTitle": "Ma formule",
+    "planFree": "Gratuit",
+    "planPremium": "Pro",
+    "planFreeHint": "1 événement actif, 5 photos par galerie.",
+    "planPremiumHint": "50 événements actifs, 20 photos par galerie et modèles payants.",
+    "planUntil": "Pro jusqu'au {date}.",
+    "planLifetime": "Pro actif sans date d'expiration.",
+    "planUpgradeHint": "L'activation Pro se fait pour l'instant manuellement par l'équipe Mon Celebra."
   },
   "editor": {
     "posterTitle": "Affiche de l'événement",
@@ -127,7 +135,7 @@
     "latitude": "Latitude",
     "longitude": "Longitude",
     "gallerySection": "Galerie",
-    "photos": "Photos (max 20, 3 Mo par image)",
+    "photos": "Photos (max {max}, 3 Mo par image)",
     "photosCount": "{count} photo(s) sélectionnée(s)",
     "galleryHint": "La galerie se gère depuis la page de gestion de l'événement.",
     "publicationSection": "Publication",
@@ -140,7 +148,13 @@
     "submitCreate": "Créer l'événement",
     "submitSave": "Enregistrer",
     "submitting": "Enregistrement...",
-    "cancel": "Annuler"
+    "cancel": "Annuler",
+    "templateSection": "Modèle de page",
+    "templateHint": "Choisissez le style de la page publique. Les modèles Premium sont réservés aux comptes Premium.",
+    "templateDefault": "Style par défaut",
+    "templatePremium": "Premium",
+    "templateLocked": "Passez en Premium pour utiliser ce modèle.",
+    "templateLoading": "Chargement des modèles..."
   },
   "publicPage": {
     "loading": "Chargement de l'événement...",

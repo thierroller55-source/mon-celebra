@@ -4,6 +4,50 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "npm install",
   "rewrites": [
+    {
+      "source": "/e/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|redditbot|mastodon|bluesky|embedly|iframely|googlebot|bingbot|duckduckbot|yandexbot|applebot|w3c_validator).*"
+        }
+      ],
+      "destination": "https://mon-celebra.onrender.com/api/share/e/:slug"
+    },
+    {
+      "source": "/fr/e/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|redditbot|mastodon|bluesky|embedly|iframely|googlebot|bingbot|duckduckbot|yandexbot|applebot|w3c_validator).*"
+        }
+      ],
+      "destination": "https://mon-celebra.onrender.com/api/share/e/:slug"
+    },
+    {
+      "source": "/en/e/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|redditbot|mastodon|bluesky|embedly|iframely|googlebot|bingbot|duckduckbot|yandexbot|applebot|w3c_validator).*"
+        }
+      ],
+      "destination": "https://mon-celebra.onrender.com/api/share/e/:slug"
+    },
+    {
+      "source": "/wo/e/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": "(?i).*(facebookexternalhit|facebot|whatsapp|twitterbot|telegrambot|linkedinbot|slackbot|discordbot|pinterestbot|redditbot|mastodon|bluesky|embedly|iframely|googlebot|bingbot|duckduckbot|yandexbot|applebot|w3c_validator).*"
+        }
+      ],
+      "destination": "https://mon-celebra.onrender.com/api/share/e/:slug"
+    },
     { "source": "/api/(.*)", "destination": "https://mon-celebra.onrender.com/api/$1" },
     { "source": "/uploads/(.*)", "destination": "https://mon-celebra.onrender.com/uploads/$1" },
     { "source": "/(.*)", "destination": "/index.html" }

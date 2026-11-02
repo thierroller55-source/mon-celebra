@@ -5,13 +5,16 @@ import { Template } from '../models/Template.js';
 import { Report } from '../models/Report.js';
 import { Rsvp } from '../models/Rsvp.js';
 import { GuestbookMessage } from '../models/GuestbookMessage.js';
-import { Notification } from '../models/Notification.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as eventService from '../services/event.service.js';
 import { EVENT_STATUS, GUESTBOOK_STATUS } from '../config/constants.js';
 import { env } from '../config/env.js';
 import { sendEmail, maskEmail } from '../services/mailer.service.js';
+import { UpgradeRequest } from '../models/UpgradeRequest.js';
+import { PlanAudit } from '../models/PlanAudit.js';
+import { PLAN_IDS, USER_PLANS } from '../config/plans.js';
+import { Notification } from '../models/Notification.js';
 import { testEmailTemplate } from '../services/emailTemplates.js';
 
 function escapeRegex(value) {
@@ -106,6 +109,18 @@ export const blockUser = asyncHandler(async (req, res) => {
 export const unblockUser = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(req.params.id, { isActive: true }, { new: true });
   if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+  res.json({ success: true, data: { user } });
+});
+
+export const updateUserPlan = asyncHandler(async (req, res) => {
+  const { plan, proUntil } = req.body;
+  const user = await User.findById(req.params.id);
+  if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+
+  user.plan = plan;
+  user.proUntil = plan === USER_PLANS.PRO && proUntil ? new Date(proUntil) : null;
+
+  await user.save();
   res.json({ success: true, data: { user } });
 });
 
@@ -305,4 +320,316 @@ export const emailHealth = asyncHandler(async (req, res) => {
       },
     });
   }
+});
+
+/* --------------------------- Plans / UpgradeRequests ------------------------ */
+
+function addMonthsToDate(date, months) {
+  if (!months) return null;
+  const result = new Date(date.getTime());
+  const day = result.getUTCDate();
+  result.setUTCDate(1);
+  result.setUTCMonth(result.getUTCMonth() + Number(months));
+  const lastDay = new Date(Date.UTC(result.getUTCFullYear(), result.getUTCMonth() + 1, 0)).getUTCDate();
+  result.setUTCDate(Math.min(day, lastDay));
+  return result;
+}
+
+async function writePlanAudit({ adminId, targetUserId, eventId = null, before, after, reason = null }) {
+  try {
+    await PlanAudit.create({
+      adminId,
+      targetUserId,
+      eventId,
+      before,
+      after,
+      reason,
+    });
+  } catch (err) {
+    // journal immuable : on ne doit pas bloquer l'activation si ecriture echoue
+    console.error('PlanAudit write failed', err);
+  }
+}
+
+export const listUpgradeRequests = asyncHandler(async (req, res) => {
+  const { status, planRequested } = req.query;
+  const filter = {};
+  if (status) filter.status = status;
+  if (planRequested) filter.planRequested = planRequested;
+
+  const requests = await UpgradeRequest.find(filter)
+    .sort({ createdAt: -1 })
+    .populate('userId', 'firstName lastName email plan proUntil')
+    .populate('eventId', 'title slug category');
+
+  res.json({ success: true, data: { requests } });
+});
+
+export const getUpgradeRequest = asyncHandler(async (req, res) => {
+  const request = await UpgradeRequest.findById(req.params.id)
+    .populate('userId', 'firstName lastName email plan proUntil phone')
+    .populate('eventId', 'title slug category plan premiumUntil ownerId');
+  if (!request) throw ApiError.notFound('Demande introuvable.');
+  res.json({ success: true, data: { request } });
+});
+
+export const decideUpgradeRequest = asyncHandler(async (req, res) => {
+  const { action, durationMonths, proUntil: proUntilBody, note, amount, paymentMethod } = req.body;
+  const request = await UpgradeRequest.findById(req.params.id);
+  if (!request) throw ApiError.notFound('Demande introuvable.');
+  if (request.status !== 'pending') {
+    throw ApiError.badRequest('Cette demande a deja ete traitee.', 'UPGRADE_REQUEST_ALREADY_DECIDED');
+  }
+
+  const user = await User.findById(request.userId);
+  if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+  const event = request.eventId ? await Event.findById(request.eventId) : null;
+
+  const before = {
+    user: { plan: user.plan, proUntil: user.proUntil },
+    event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+  };
+
+  if (action === 'reject') {
+    request.status = 'rejected';
+    request.decidedBy = req.user.id;
+    request.decidedAt = new Date();
+    request.note = note || request.note;
+    await request.save();
+
+    await writePlanAudit({
+      adminId: req.user.id,
+      targetUserId: user._id,
+      eventId: event?._id || null,
+      before,
+      after: before,
+      reason: note || 'Demande refusee',
+    });
+
+    try {
+      await Notification.create({
+        userId: user._id,
+        type: 'info',
+        title: 'Demande de mise a niveau refusee',
+        message: note ? `Votre demande a ete refusee : ${note}` : 'Votre demande de mise a niveau a ete refusee apres verification du paiement.',
+      });
+    } catch (err) {}
+
+    return res.json({ success: true, data: { request } });
+  }
+
+  if (action === 'deactivate') {
+    if (request.planRequested === PLAN_IDS.PRO) {
+      user.plan = USER_PLANS.FREE;
+      user.proUntil = null;
+      await user.save();
+    }
+    if (request.planRequested === PLAN_IDS.EVENT_PASS && event) {
+      event.plan = 'free';
+      event.premiumUntil = null;
+      await event.save();
+    }
+    request.status = 'rejected';
+    request.decidedBy = req.user.id;
+    request.decidedAt = new Date();
+    request.note = note || 'Desactive par l\'administrateur';
+    await request.save();
+
+    const after = {
+      user: { plan: user.plan, proUntil: user.proUntil },
+      event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+    };
+    await writePlanAudit({
+      adminId: req.user.id,
+      targetUserId: user._id,
+      eventId: event?._id || null,
+      before,
+      after,
+      reason: note || 'Desactivation',
+    });
+
+    try {
+      await Notification.create({
+        userId: user._id,
+        type: 'info',
+        title: 'Plan desactive',
+        message: 'Votre plan a ete desactive par un administrateur.',
+      });
+    } catch (err) {}
+
+    return res.json({ success: true, data: { request } });
+  }
+
+  // approve
+  if (request.planRequested === PLAN_IDS.PRO) {
+    user.plan = USER_PLANS.PRO;
+    if (proUntilBody) {
+      user.proUntil = new Date(proUntilBody);
+    } else if (durationMonths) {
+      user.proUntil = addMonthsToDate(new Date(), durationMonths);
+    } else {
+      user.proUntil = null; // illimite tant que valide? or indefinite - per spec "tant que proUntil est valide" but activation can set duration; keep flexible
+    }
+    await user.save();
+  } else if (request.planRequested === PLAN_IDS.EVENT_PASS && event) {
+    event.plan = PLAN_IDS.EVENT_PASS;
+    if (durationMonths) {
+      event.premiumUntil = addMonthsToDate(new Date(), durationMonths);
+    } else {
+      event.premiumUntil = addMonthsToDate(new Date(), 12);
+    }
+    await event.save();
+  }
+
+  request.status = 'approved';
+  request.decidedBy = req.user.id;
+  request.decidedAt = new Date();
+  if (amount !== undefined) request.amount = amount;
+  request.note = note || request.note;
+  await request.save();
+
+  const after = {
+    user: { plan: user.plan, proUntil: user.proUntil },
+    event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+  };
+  await writePlanAudit({
+    adminId: req.user.id,
+    targetUserId: user._id,
+    eventId: event?._id || null,
+    before,
+    after,
+    reason: note || 'Activation manuelle apres verification du paiement',
+  });
+
+  try {
+    await Notification.create({
+      userId: user._id,
+      type: 'success',
+      title: 'Plan active',
+      message: 'Votre plan a ete active apres verification du paiement.',
+    });
+  } catch (err) {}
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Votre plan Célébra est activé',
+      text: "Votre plan a ete active apres verification de votre paiement.",
+    });
+  } catch (err) {}
+
+  res.json({ success: true, data: { request, user, event } });
+});
+
+export const adminActivatePlan = asyncHandler(async (req, res) => {
+  const { userId, eventId, planRequested, durationMonths, proUntil, premiumUntil, amount, note } = req.body;
+
+  const user = await User.findById(userId);
+  if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+  const event = eventId ? await Event.findById(eventId) : null;
+
+  const before = {
+    user: { plan: user.plan, proUntil: user.proUntil },
+    event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+  };
+
+  if (planRequested === PLAN_IDS.PRO) {
+    user.plan = USER_PLANS.PRO;
+    user.proUntil = proUntil ? new Date(proUntil) : (durationMonths ? addMonthsToDate(new Date(), durationMonths) : null);
+    await user.save();
+  } else if (planRequested === PLAN_IDS.EVENT_PASS) {
+    if (!event) throw ApiError.badRequest('Evenement requis pour un Pass Evenement.');
+    event.plan = PLAN_IDS.EVENT_PASS;
+    event.premiumUntil = premiumUntil ? new Date(premiumUntil) : (durationMonths ? addMonthsToDate(new Date(), durationMonths) : addMonthsToDate(new Date(), 12));
+    await event.save();
+  }
+
+  const after = {
+    user: { plan: user.plan, proUntil: user.proUntil },
+    event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+  };
+  await writePlanAudit({
+    adminId: req.user.id,
+    targetUserId: user._id,
+    eventId: event?._id || null,
+    before,
+    after,
+    reason: note || 'Activation manuelle sans demande',
+  });
+
+  try {
+    await Notification.create({
+      userId: user._id,
+      type: 'success',
+      title: 'Plan active',
+      message: 'Votre plan a ete active par un administrateur.',
+    });
+  } catch (err) {}
+  try {
+    await sendEmail({
+      to: user.email,
+      subject: 'Votre plan Célébra est activé',
+      text: "Votre plan a ete active par un administrateur.",
+    });
+  } catch (err) {}
+
+  res.json({ success: true, data: { user, event } });
+});
+
+export const adminDeactivatePlan = asyncHandler(async (req, res) => {
+  const { userId, eventId, note } = req.body;
+  const user = await User.findById(userId);
+  if (!user) throw ApiError.notFound('Utilisateur introuvable.');
+  const event = eventId ? await Event.findById(eventId) : null;
+
+  const before = {
+    user: { plan: user.plan, proUntil: user.proUntil },
+    event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+  };
+
+  if (eventId && event) {
+    event.plan = 'free';
+    event.premiumUntil = null;
+    await event.save();
+  } else {
+    user.plan = USER_PLANS.FREE;
+    user.proUntil = null;
+    await user.save();
+  }
+
+  const after = {
+    user: { plan: user.plan, proUntil: user.proUntil },
+    event: event ? { plan: event.plan, premiumUntil: event.premiumUntil } : null,
+  };
+  await writePlanAudit({
+    adminId: req.user.id,
+    targetUserId: user._id,
+    eventId: event?._id || null,
+    before,
+    after,
+    reason: note || 'Desactivation',
+  });
+
+  try {
+    await Notification.create({
+      userId: user._id,
+      type: 'info',
+      title: 'Plan desactive',
+      message: 'Votre plan a ete desactive.',
+    });
+  } catch (err) {}
+
+  res.json({ success: true, data: { user, event } });
+});
+
+export const listPlanAudits = asyncHandler(async (req, res) => {
+  const { targetUserId } = req.query;
+  const filter = {};
+  if (targetUserId) filter.targetUserId = targetUserId;
+  const audits = await PlanAudit.find(filter)
+    .sort({ createdAt: -1 })
+    .limit(100)
+    .populate('adminId', 'firstName lastName email')
+    .populate('targetUserId', 'firstName lastName email')
+    .populate('eventId', 'title slug');
+  res.json({ success: true, data: { audits } });
 });

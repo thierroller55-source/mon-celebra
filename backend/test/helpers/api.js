@@ -30,6 +30,7 @@ export function createApiClient(baseUrl) {
     setToken: (value) => {
       token = value;
     },
+    getToken: () => token,
     raw: request,
   };
 }

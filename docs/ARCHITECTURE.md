@@ -2,8 +2,9 @@
 
 > « Chaque moment mérite d'être célébré. »
 >
-> Document maître de référence — Version 1.0 — Étape 1 (Architecture avant implémentation)
-> Statut : **en attente de validation**
+> Document maître de référence — Version 1.1 — État d'implémentation
+> Statut : **phases 1 à 3 implémentées ; fondation des plans free / event_pass / pro et migration en place ; application complète des droits et paiement à venir**
+> Dernière vérification : 29/10/2026 — 92 tests backend, 129 tests e2e Chromium, lint OK.
 
 ---
 
@@ -23,7 +24,7 @@
 | QR Code | **bibliothèque `qrcode` (npm)** | Gratuit, génération serveur PNG/SVG | Service externe |
 | Email | **Nodemailer (SMTP) ou Resend/Brevo** — optionnel | Mot de passe oublié + notifications | Service payant |
 
-**Note SEO (point d'attention importante) :** une SPA React classique rend son contenu côté client. Les moteurs de recherche et l'aperçu de lien **WhatsApp/Facebook** lisent surtout les balises HTML initiales. Or le prompt exige des **balises Open Graph dynamiques par événement** (titre, description, image). Solution retenue sans changer de framework : le backend expose une petite route `/e/:slug` qui renvoie un **HTML avec métadonnées Open Graph injectées** puis redirige vers la SPA. Alternative plus propre à terme : migrer le rendu public vers **Next.js**. Décision à valider à l'étape « Page publique / SEO ».
+**Note SEO (point d'attention importante) :** une SPA React classique rend son contenu côté client. Les moteurs de recherche et l'aperçu de lien **WhatsApp/Facebook** lisent surtout les balises HTML initiales. Or le prompt exige des **balises Open Graph dynamiques par événement** (titre, description, image). Solution implémentée sans changer de framework : la route backend `GET /api/share/e/:slug` renvoie un **HTML avec métadonnées Open Graph** aux robots sociaux ; les navigateurs sont redirigés vers la SPA. Côté Vercel, des rewrites ciblent les user-agents des robots (`facebookexternalhit`, `WhatsApp`, `TelegramBot`, etc.) vers cette route. Alternative plus propre à terme : migrer le rendu public vers **Next.js**.
 
 ---
 
@@ -75,10 +76,13 @@ mon-celebra/
 │   └── DEPLOYMENT.md                # guide de deploiement (etape finale)
 │
 ├── backend/
+│   ├── scripts/
+│   │   └── migrate-plans.js         # migration idempotente + sauvegarde JSON
 │   ├── src/
 │   │   ├── config/
 │   │   │   ├── env.js               # chargement + validation des variables d'env
 │   │   │   ├── db.js                # connexion Mongoose
+│   │   │   ├── plans.js             # source unique : plans, limites, prix, droits
 │   │   │   └── constants.js         # categories, types de lieux, statuts, enums
 │   │   ├── models/
 │   │   │   ├── User.js
@@ -88,7 +92,9 @@ mon-celebra/
 │   │   │   ├── Template.js
 │   │   │   ├── Category.js
 │   │   │   ├── Report.js
-│   │   │   └── Notification.js
+│   │   │   ├── Notification.js
+│   │   │   ├── UpgradeRequest.js
+│   │   │   └── PlanAudit.js
 │   │   ├── controllers/
 │   │   │   ├── auth.controller.js
 │   │   │   ├── user.controller.js
@@ -273,7 +279,7 @@ validate, upload] -> controller -> service -> model (Mongoose) -> response JSON
 
 ### 5.1 Collections
 
-`users`, `events`, `rsvps`, `guestbookmessages`, `templates`, `categories`, `reports`, `notifications`.
+`users`, `events`, `rsvps`, `guestbookmessages`, `templates`, `categories`, `reports`, `notifications`, `upgraderequests`, `planaudits`.
 
 ### 5.2 `users`
 
@@ -286,7 +292,9 @@ validate, upload] -> controller -> service -> model (Mongoose) -> response JSON
   passwordHash: String,         // requis (jamais renvoyé)
   phone:     String,
   role:      String,            // enum: ['user','admin'], defaut 'user'
-  language:  String,            // enum: ['fr','en'], defaut 'fr'
+  plan:      String,            // enum: ['free','pro'], defaut 'free', index
+  proUntil:  Date,              // expiration Pro (null = sans expiration)
+  language:  String,            // enum: ['fr','en','wo'], defaut 'fr'
   avatar:    { url, publicId },
   isActive:  Boolean,           // defaut true (blocage admin)
   emailVerified: Boolean,       // defaut false
@@ -320,6 +328,9 @@ Ajouter une catégorie = insérer un document + décrire ses champs dans `fields
 {
   _id,
   ownerId: ObjectId,            // ref users, index
+  plan:     String,             // enum: ['free','event_pass'], defaut 'free', index
+  premiumUntil: Date,           // fin du Pass Evenement (null = sans expiration)
+  legacy:   Boolean,            // evenement anterieur a la migration (defaut false)
   category: String,             // slug categorie ("mariage")  [extensible]
   slug:     String,             // unique, index  -> /e/marie-et-fatou
   title:    String,             // requis
@@ -332,7 +343,7 @@ Ajouter une catégorie = insérer un document + décrire ses champs dans `fields
 
   location: {                   // lieu principal
     label:     String,          // "Ceremonie religieuse"
-    type:      String,          // enum placeType (voir 5.10)
+    type:      String,          // enum placeType (voir 5.11)
     name:      String,          // "Mosquee Al-Falah"
     address:   String,
     latitude:  Number,
@@ -468,7 +479,23 @@ details = {
 { _id, userId, type, title, message, link, read: Boolean, createdAt }
 ```
 
-### 5.10 Enum `placeType`
+### 5.10 `upgraderequests` / `planaudits`
+
+```js
+// upgraderequests
+{
+  userId, eventId, planRequested, status, reference,
+  payerPhone, transactionRef, amount, decidedBy, decidedAt, note,
+  createdAt / updatedAt
+}
+
+// planaudits (journal immuable, aucune mise a jour/suppression)
+{
+  adminId, targetUserId, eventId, before, after, reason, createdAt
+}
+```
+
+### 5.11 Enum `placeType`
 
 `mosquee`, `eglise`, `salle_reception`, `hotel`, `domicile`, `restaurant`, `exterieur`, `entreprise`, `ecole_universite`, `autre`.
 
@@ -512,6 +539,7 @@ details = {
 | Méthode | Route | Accès |
 |---|---|---|
 | GET | `/api/public/events/:slug` | Public (code si protégé) |
+| GET | `/api/share/e/:slug` | Robots sociaux (Open Graph) |
 | POST | `/api/public/events/:slug/rsvp` | Public + rate-limit |
 | POST | `/api/public/events/:slug/guestbook` | Public + rate-limit |
 | GET | `/api/public/events/:slug/calendar.ics` | Public |
@@ -589,7 +617,9 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 - Props normalisées → **changer de template ne perd aucune donnée**.
 - Templates de base : Mariage (Elegant, Romantic, Luxury, Modern, Minimal, Traditional) ; Anniversaire (Fun, Party, Elegant, Modern, Kids) ; Baptême (Baby, Elegant, Minimal, Floral).
 - Admin : activation/désactivation et ajout de templates.
-- `isPremium` préparé pour la phase 4 (sans logique de paiement en phase 1).
+- `isPremium` est appliqué côté backend : seules les formules payantes (Pass Evenement, Pro) peuvent choisir un template premium (`PREMIUM_REQUIRED`). Un template déjà utilisé reste modifiable après un downgrade.
+- Le sélecteur de modèle est disponible dans le formulaire de création/édition.
+- Paiement et abonnement automatique restent à implémenter ; l'activation Pro est manuelle via l'admin.
 
 ---
 
@@ -677,7 +707,7 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 - Erreurs vers le client toujours génériques (« Une erreur est survenue… »).
 - SEO public : title unique, meta description, URL propre, Open Graph par événement (cf. note §0).
 - Performance : lazy loading, pagination, cache géocodage, images optimisées, requêtes minimales.
-- Quotas gratuits : 3 événements actifs/utilisateur, 20 photos/événement, 3 Mo/photo avant compression.
+- Quotas dynamiques par formule : gratuit = 1 événement actif et 5 photos/événement ; Pass Evenement = 20 photos ; Pro = 50 événements actifs et 20 photos. Taille max d'une photo : 3 Mo avant compression (toutes formules).
 
 ---
 
@@ -685,10 +715,10 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 
 | Phase | Contenu | Statut |
 |---|---|---|
-| **1 — MVP** | Accueil, inscription, connexion, dashboard, création événement, mariage/anniversaire/baptême, templates, photos, lieu, géolocalisation, page publique, URL unique, QR, partage, responsive | À venir |
-| **2 — v1.0** | RSVP, livre d'or, compte à rebours, confidentialité (3 niveaux), dashboard admin, gestion catégories/templates, SEO/Open Graph, statistiques | À venir |
-| **3 — Catégories** | Graduation, fiançailles, soirée, baby shower, inauguration, événement pro, commémoration, autres | À venir |
-| **4 — Premium** | Paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | À venir |
+| **1 — MVP** | Accueil, inscription, connexion, dashboard, création événement, mariage/anniversaire/baptême, templates, photos, lieu, géolocalisation, page publique, URL unique, QR, partage, responsive | Terminée |
+| **2 — v1.0** | RSVP, livre d'or, compte à rebours, confidentialité (3 niveaux), dashboard admin, gestion catégories/templates, SEO/Open Graph, statistiques | Terminée |
+| **3 — Catégories** | Graduation, fiançailles, soirée, baby shower, inauguration, événement pro, commémoration, autres | Terminée |
+| **4 — Premium** | Plans free / event_pass / pro, paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | **Fondation faite** (catalogue partagé, modèles, migration, droits de base) ; application complète des limites et paiement à venir |
 
 ---
 
@@ -703,4 +733,4 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 | Langue | Français au démarrage ; champ `language` prévu pour l'anglais |
 | Domaine | `moncelebra.com` (à confirmer au déploiement) |
 
-> Note SEO Open Graph dynamique : solution provisoire prévue (route HTML OG côté backend), à confirmer lors de l'étape « Page publique ».
+> Note SEO Open Graph dynamique : implémentée via `GET /api/share/e/:slug` + rewrites Vercel pour les robots sociaux (voir §0).
