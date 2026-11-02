@@ -5,8 +5,10 @@ import { categoryService } from '../../services/category.service.js';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage, getFieldErrors } from '../../services/api.js';
 import EventForm from '../../components/event/EventForm.jsx';
+import { useAuthContext } from '../../context/AuthContext.jsx';
 
 export default function CreateEvent({ categorySlug: categorySlugProp }) {
+  const { user, guest } = useAuthContext();
   const params = useParams();
   const categorySlug = categorySlugProp || params.categorySlug;
   const navigate = useNavigate();
@@ -15,6 +17,12 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!user) {
+      guest().catch(() => {});
+    }
+  }, [user, guest]);
 
   useEffect(() => {
     let active = true;
