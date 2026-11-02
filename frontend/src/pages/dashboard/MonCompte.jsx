@@ -1,3 +1,4 @@
+import PasswordField from '../../components/auth/PasswordField.jsx';
 import { useEffect, useRef, useState } from 'react';
 import { Crown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
