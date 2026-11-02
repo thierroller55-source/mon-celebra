@@ -43,6 +43,11 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
   }, [categorySlug]);
 
   const handleSubmit = async (payload, { files, publishNow, posterFile }) => {
+    if (!user) {
+      try {
+        await guest();
+      } catch {}
+    }
     setError('');
     setFieldErrors({});
     if (!payload.title) {
