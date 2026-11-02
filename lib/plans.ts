@@ -68,7 +68,7 @@ export const PLAN_CATALOG = Object.freeze({
     purchasable: true,
     nameKey: 'plans.eventPass.name',
     descriptionKey: 'plans.eventPass.description',
-    priceFcfa: null,
+    priceFcfa: 2500,
     limits: Object.freeze({
       maxActiveEvents: null,
       maxActiveEventsPerPass: 1,
@@ -96,7 +96,7 @@ export const PLAN_CATALOG = Object.freeze({
     purchasable: true,
     nameKey: 'plans.pro.name',
     descriptionKey: 'plans.pro.description',
-    priceFcfa: null,
+    priceFcfa: 3000,
     limits: Object.freeze({
       maxActiveEvents: 50,
       maxPhotosPerEvent: 20,
