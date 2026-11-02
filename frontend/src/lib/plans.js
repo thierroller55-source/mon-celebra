@@ -1,1 +1,1 @@
-export * from '../../../../lib/plans.ts';
+export * from '../../../lib/plans.ts';

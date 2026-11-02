@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PLAN_CATALOG, PUBLIC_PLAN_IDS } from '../../lib/plans.js';
 import PlanCard from '../../components/plans/PlanCard.jsx';
-import { useI18n } from '../../hooks/useI18n.js';
+import { useLocale } from '../../context/LocaleContext.jsx';
 
 const FAQ = [
   { q: 'Que se passe-t-il à la fin de mon Pass ?', a: "À l'expiration, une période de grâce de 30 jours s'applique, puis les limites du plan gratuit reprennent. Aucune donnée n'est supprimée ; les fonctions premium se verrouillent." },
@@ -13,7 +13,7 @@ const FAQ = [
 ];
 
 export default function Tarifs() {
-  const { t, locale } = useI18n();
+  const { locale } = useLocale();
   const [lang] = useState(locale || 'fr');
 
   const plans = useMemo(() => PUBLIC_PLAN_IDS.map((id) => PLAN_CATALOG[id]).filter(Boolean), []);
