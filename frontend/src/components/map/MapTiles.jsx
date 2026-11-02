@@ -44,3 +44,11 @@ export default function MapTiles({ mode = 'plan' }) {
     />
   );
 }
+
+if (typeof console !== 'undefined' && typeof import.meta !== 'undefined' && import.meta.env?.DEV) {
+  import('../../lib/map-tiles.ts').then(({ hasCartoKey }) => {
+    if (!hasCartoKey()) {
+      console.warn('[map-tiles] NEXT_PUBLIC_CARTO_KEY/VITE_CARTO_KEY manquante. Repli vers OpenStreetMap si nécessaire.');
+    }
+  }).catch(() => {});
+}
