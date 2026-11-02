@@ -90,13 +90,13 @@ test('robot social : le titre est echappe (pas d injection HTML)', async () => {
 });
 
 test('robot social : evenement prive ou protege -> apercu neutre sans fuite', async () => {
-  const { api } = await createUserClient(baseUrl);
   const cases = [
     { title: 'Anniversaire prive', visibility: 'private' },
     { title: 'Mariage secret', visibility: 'password', accessCode: '1234' },
   ];
 
   for (const overrides of cases) {
+    const { api } = await createUserClient(baseUrl);
     const event = await makePublishedEvent(api, overrides);
     const res = await fetchShare(event.slug, BOT_UA);
     assert.equal(res.status, 200);

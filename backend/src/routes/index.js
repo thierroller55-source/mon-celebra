@@ -13,6 +13,7 @@ import adminRoutes from './admin.routes.js';
 import geoRoutes from './geo.routes.js';
 import notificationRoutes from './notification.routes.js';
 import shareRoutes from './share.routes.js';
+import upgradeRoutes from './upgrade.routes.js';
 
 const router = Router();
 
@@ -54,6 +55,7 @@ router.use('/share', shareRoutes);
 router.use('/reports', reportRoutes);
 router.use('/geo', geoRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/upgrades', upgradeRoutes);
 
 // Administration
 router.use('/admin', adminRoutes);

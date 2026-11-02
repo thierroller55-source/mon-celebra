@@ -33,3 +33,9 @@ Fichiers : `frontend/src/i18n/messages/{fr,en,wo}.json`
 - Ne jamais afficher une clé brute : toute clé manquante en `wo`/`en` retombe sur `fr`.
 - Le test `backend/test/i18n.parity.test.js` échoue si les 3 fichiers n'ont pas exactement les mêmes clés.
 - Caractères wolof à contrôler : **ñ, ŋ, ó, é, ë, à** (vérifier leur rendu sur l'affiche canvas et dans l'UI).
+
+## Plans & Tarifs (ajouts)
+- tarifs.title / tarifs.subtitle
+- plans.free.name / plans.eventPass.name / plans.pro.name
+- plans.*.description (à valider)
+- wo: traductions à valider pour les libellés de plans/tarifs/FAQ

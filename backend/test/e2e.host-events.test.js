@@ -39,7 +39,9 @@ test.after(async () => {
 
 test('GET /events : liste les evenements du proprietaire uniquement', async () => {
   const { api } = await createUserClient(baseUrl);
-  await createEvent(api, { title: 'Evenement Un' });
+  const first = await createEvent(api, { title: 'Evenement Un' });
+  const archived = await api.post(`/events/${first._id}/archive`);
+  assert.equal(archived.status, 200);
   await createEvent(api, { title: 'Evenement Deux' });
 
   const list = await api.get('/events');
@@ -73,6 +75,7 @@ test('POST /:id/duplicate : cree une copie en brouillon avec un nouveau slug', a
   const { api } = await createUserClient(baseUrl);
   const event = await createEvent(api, { title: 'Original' });
   await api.post(`/events/${event._id}/publish`);
+  await api.post(`/events/${event._id}/archive`);
 
   const dup = await api.post(`/events/${event._id}/duplicate`);
   assert.equal(dup.status, 201);

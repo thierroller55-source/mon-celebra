@@ -2,7 +2,6 @@ import bcrypt from 'bcryptjs';
 import { Event } from '../models/Event.js';
 import { Rsvp } from '../models/Rsvp.js';
 import { User } from '../models/User.js';
-import { GuestbookMessage } from '../models/GuestbookMessage.js';
 import { Report } from '../models/Report.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -18,6 +17,8 @@ import {
   GUESTBOOK_STATUS,
   RSVP_RESPONSE,
 } from '../config/constants.js';
+import { getEventEntitlements } from '../services/plan.service.js';
+import { GuestbookMessage } from '../models/GuestbookMessage.js';
 
 function findPublishedEvent(slug, { withAccessCode = false } = {}) {
   const query = Event.findOne({ slug, status: EVENT_STATUS.PUBLISHED });
@@ -156,6 +157,18 @@ export const createGuestbookMessage = asyncHandler(async (req, res) => {
   if (!event) throw ApiError.notFound('Evenement introuvable.');
   if (event.settings?.guestbookEnabled === false) {
     throw ApiError.forbidden('Le livre d\'or est ferme pour cet evenement.', 'GUESTBOOK_DISABLED');
+  }
+
+  const entitlements = await getEventEntitlements(event);
+  const limit = entitlements.limits.maxGuestbookMessages;
+  if (limit !== null && limit !== undefined) {
+    const count = await GuestbookMessage.countDocuments({ eventId: event._id });
+    if (count >= limit) {
+      throw ApiError.forbidden(
+        `Limite de ${limit} messages dans le livre d'or atteinte. Passez au Premium pour un livre d'or illimité.`,
+        'PLAN_LIMIT_GUESTBOOK',
+      );
+    }
   }
 
   let photo;

@@ -5,9 +5,9 @@ import { getErrorMessage } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
 import { useAuth } from '../../hooks/useAuth.js';
 
-function isPremiumActive(user) {
-  if (user?.plan !== 'premium') return false;
-  return !user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now();
+function isProActive(user) {
+  if (user?.plan !== 'pro') return false;
+  return !user.proUntil || new Date(user.proUntil).getTime() > Date.now();
 }
 
 export default function AdminUsers() {
@@ -53,14 +53,14 @@ export default function AdminUsers() {
   };
 
   const handlePlan = async (u) => {
-    const premium = isPremiumActive(u);
+    const premium = isProActive(u);
     setBusyId(u._id);
     try {
       const updated = await adminService.updateUserPlan(u._id, {
-        plan: premium ? 'free' : 'premium',
+        plan: premium ? 'free' : 'pro',
       });
       setUsers((list) => list.map((x) => (x._id === updated._id ? updated : x)));
-      toast.success(premium ? 'Compte repasse en gratuit.' : 'Compte passe en Premium.');
+      toast.success(premium ? 'Compte repasse en gratuit.' : 'Compte passe en Pro.');
     } catch (err) {
       toast.error(getErrorMessage(err));
     } finally {
@@ -143,12 +143,12 @@ export default function AdminUsers() {
                   <td className="px-4 py-3">
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs ${
-                        isPremiumActive(u)
+                        isProActive(u)
                           ? 'bg-celebra-gold/15 text-celebra-gold'
                           : 'bg-celebra-dark/5 text-celebra-dark/60'
                       }`}
                     >
-                      {isPremiumActive(u) ? 'Premium' : 'Gratuit'}
+                      {isProActive(u) ? 'Pro' : 'Gratuit'}
                     </span>
                   </td>
                   <td className="px-4 py-3">
@@ -165,9 +165,9 @@ export default function AdminUsers() {
                       <button
                         type="button"
                         className={`btn-outline px-2 py-1 ${
-                          isPremiumActive(u) ? 'text-celebra-dark/60' : 'text-celebra-gold'
+                          isProActive(u) ? 'text-celebra-dark/60' : 'text-celebra-gold'
                         }`}
-                        title={isPremiumActive(u) ? 'Repasser en gratuit' : 'Passer en Premium'}
+                        title={isProActive(u) ? 'Repasser en gratuit' : 'Passer en Pro'}
                         disabled={busyId === u._id}
                         onClick={() => handlePlan(u)}
                       >

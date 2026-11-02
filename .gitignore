@@ -6,6 +6,9 @@ node_modules/
 dist/
 build/
 
+# Sauvegardes de migration (donnees sensibles)
+backend/backups/
+
 # Variables d'environnement (ne jamais committer)
 .env
 .env.local

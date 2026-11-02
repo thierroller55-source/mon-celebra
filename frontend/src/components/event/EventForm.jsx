@@ -75,9 +75,9 @@ export default function EventForm({
   const { t } = useTranslation();
   const { user } = useAuth();
   const categorySlug = category?.slug;
-  const isPremium =
-    user?.plan === 'premium' &&
-    (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now());
+  const isPro =
+    user?.plan === 'pro' &&
+    (!user.proUntil || new Date(user.proUntil).getTime() > Date.now());
   const [form, setForm] = useState(() => buildInitial(categorySlug, event));
   const [details, setDetails] = useState(() => event?.details || {});
   const [files, setFiles] = useState([]);
@@ -423,7 +423,7 @@ export default function EventForm({
       <section className="card space-y-4 p-6">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="font-semibold">{t('editor.templateSection')}</h2>
-          {!isPremium && (
+          {!isPro && (
             <span className="inline-flex items-center gap-1 rounded-full bg-celebra-gold/15 px-2 py-0.5 text-xs text-celebra-gold">
               <Crown size={12} /> {t('editor.templatePremium')}
             </span>
@@ -451,7 +451,7 @@ export default function EventForm({
             </button>
 
             {templates.map((tpl) => {
-              const locked = tpl.isPremium && !isPremium;
+              const locked = tpl.isPremium && !isPro;
               const selected = form.templateId === tpl._id;
               return (
                 <button
@@ -646,7 +646,7 @@ export default function EventForm({
         {mode === 'create' ? (
           <div>
             <label htmlFor="photos" className="label">
-              {t('editor.photos', { max: isPremium ? 100 : 20 })}
+              {t('editor.photos', { max: isPro ? 20 : 5 })}
             </label>
             <input
               id="photos"

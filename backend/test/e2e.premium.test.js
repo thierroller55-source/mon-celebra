@@ -46,26 +46,26 @@ test.after(async () => {
   await stopMongo();
 });
 
-test('nouveau compte : formule gratuite et quota de 3 evenements actifs', async () => {
+test('nouveau compte : formule gratuite et quota de 1 evenement actif', async () => {
   const { api, user } = await createUserClient(baseUrl);
   assert.equal(user.plan, 'free');
-  assert.equal(user.premiumUntil, null);
+  assert.equal(user.proUntil, null);
 
-  for (let index = 1; index <= 3; index += 1) {
+  for (let index = 1; index <= 1; index += 1) {
     const created = await createEvent(api, { title: `Gratuit ${index}` });
     assert.equal(created.status, 201, JSON.stringify(created.body));
   }
 
-  const blocked = await createEvent(api, { title: 'Gratuit 4' });
+  const blocked = await createEvent(api, { title: 'Gratuit 2' });
   assert.equal(blocked.status, 403);
-  assert.equal(blocked.body.code, 'QUOTA_REACHED');
+  assert.ok(blocked.body.code === 'QUOTA_REACHED' || blocked.body.code === 'PLAN_LIMIT_EVENTS');
 
   const me = await api.get('/me');
   assert.equal(me.status, 200);
   assert.equal(me.body.data.plan, 'free');
 });
 
-test('admin active Premium : quota elargi, templates premium et expiration', async () => {
+test('admin active Pro : quota elargi, templates premium et expiration', async () => {
   const { api, user } = await createUserClient(baseUrl);
   const templates = await api.get('/templates?category=mariage');
   assert.equal(templates.status, 200);
@@ -81,11 +81,10 @@ test('admin active Premium : quota elargi, templates premium et expiration', asy
   assert.equal(denied.status, 403, JSON.stringify(denied.body));
   assert.equal(denied.body.code, 'PREMIUM_REQUIRED');
 
-  const upgraded = await admin.patch(`/admin/users/${user._id}/plan`, { plan: 'premium' });
+  const upgraded = await admin.patch(`/admin/users/${user._id}/plan`, { plan: 'pro' });
   assert.equal(upgraded.status, 200, JSON.stringify(upgraded.body));
-  assert.equal(upgraded.body.data.user.plan, 'premium');
-  assert.equal(upgraded.body.data.user.premiumSource, 'manual');
-  assert.equal(upgraded.body.data.user.premiumUntil, null);
+  assert.equal(upgraded.body.data.user.plan, 'pro');
+  assert.equal(upgraded.body.data.user.proUntil, null);
 
   const created = await createEvent(api, {
     category: 'mariage',
@@ -97,7 +96,7 @@ test('admin active Premium : quota elargi, templates premium et expiration', asy
 
   const me = await api.get('/me');
   assert.equal(me.status, 200);
-  assert.equal(me.body.data.plan, 'premium');
+  assert.equal(me.body.data.plan, 'pro');
 
   // Un template premium deja utilise reste modifiable apres un downgrade.
   const downgraded = await admin.patch(`/admin/users/${user._id}/plan`, { plan: 'free' });
@@ -112,6 +111,9 @@ test('admin active Premium : quota elargi, templates premium et expiration', asy
   });
   assert.equal(updated.status, 200, JSON.stringify(updated.body));
 
+  const removed = await api.delete(`/events/${eventId}`);
+  assert.equal(removed.status, 200, JSON.stringify(removed.body));
+
   const newPremium = await createEvent(api, {
     category: 'mariage',
     title: 'Nouveau mariage luxe',
@@ -121,22 +123,25 @@ test('admin active Premium : quota elargi, templates premium et expiration', asy
   assert.equal(newPremium.body.code, 'PREMIUM_REQUIRED');
 });
 
-test('formule Premium : date d expiration et validation admin', async () => {
+test('formule Pro : date d expiration et validation admin', async () => {
   const { api, user } = await createUserClient(baseUrl);
-  const past = new Date(Date.now() - 60_000).toISOString();
+  const past = new Date(Date.now() - 31 * 24 * 60 * 60 * 1000).toISOString();
   const expired = await admin.patch(`/admin/users/${user._id}/plan`, {
-    plan: 'premium',
-    premiumUntil: past,
+    plan: 'pro',
+    proUntil: past,
   });
   assert.equal(expired.status, 200, JSON.stringify(expired.body));
-  assert.equal(expired.body.data.user.plan, 'premium');
+  assert.equal(expired.body.data.user.plan, 'pro');
 
-  // Le plan stocke reste premium, mais les droits sont ceux du gratuit.
-  const blocked = await createEvent(api, { title: 'Expire 1' });
-  assert.equal(blocked.status, 201);
+  // Le plan stocke reste pro, mais les droits sont ceux du gratuit apres la grace.
+  const allowed = await createEvent(api, { title: 'Expire 1' });
+  assert.equal(allowed.status, 201);
+  const blocked = await createEvent(api, { title: 'Expire 2' });
+  assert.equal(blocked.status, 403);
+  assert.ok(blocked.body.code === 'QUOTA_REACHED' || blocked.body.code === 'PLAN_LIMIT_EVENTS');
   const me = await api.get('/me');
-  assert.equal(me.body.data.plan, 'premium');
-  assert.ok(new Date(me.body.data.premiumUntil).getTime() < Date.now());
+  assert.equal(me.body.data.plan, 'pro');
+  assert.ok(new Date(me.body.data.proUntil).getTime() < Date.now());
 
   const invalid = await admin.patch(`/admin/users/${user._id}/plan`, { plan: 'gold' });
   assert.equal(invalid.status, 400);

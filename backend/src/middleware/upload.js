@@ -1,7 +1,8 @@
 import multer from 'multer';
 import { env } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
-import { ALLOWED_IMAGE_MIME, QUOTAS, PLANS, PLAN_LIMITS } from '../config/constants.js';
+import { ALLOWED_IMAGE_MIME, QUOTAS } from '../config/constants.js';
+import { PLAN_CATALOG, PLAN_IDS } from '../config/plans.js';
 
 const storage = multer.memoryStorage();
 
@@ -20,8 +21,8 @@ function fileFilter(req, file, cb) {
 const maxSize = Math.min(env.MAX_FILE_SIZE_MB, QUOTAS.MAX_FILE_SIZE_MB) * 1024 * 1024;
 const posterMaxSize = QUOTAS.MAX_POSTER_SIZE_MB * 1024 * 1024;
 // Multer doit accepter le maximum toutes formules confondues : le quota reel
-// (gratuit ou Premium) est applique ensuite dans event.service.
-const galleryHardLimit = PLAN_LIMITS[PLANS.PREMIUM].maxGalleryPhotos;
+// est applique ensuite dans event.service.
+const galleryHardLimit = PLAN_CATALOG[PLAN_IDS.PRO].limits.maxPhotosPerEvent;
 
 /** Upload d'une image unique (champ "image"). */
 export const uploadSingle = multer({

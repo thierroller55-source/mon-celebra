@@ -5,6 +5,10 @@ export default defineConfig({
   plugins: [react()],
   server: {
     port: 5173,
+    fs: {
+      // Le catalogue des plans est partage avec le backend.
+      allow: ['..'],
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',

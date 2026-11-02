@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { ROLES, LANGUAGES, PLANS } from '../config/constants.js';
+import { ROLES, LANGUAGES } from '../config/constants.js';
+import { USER_PLANS, USER_PLAN_IDS } from '../config/plans.js';
 import { imageSchema } from './shared.js';
 
 const userSchema = new mongoose.Schema(
@@ -19,9 +20,8 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true, select: false },
     phone: { type: String, trim: true, maxlength: 30 },
     role: { type: String, enum: Object.values(ROLES), default: ROLES.USER },
-    plan: { type: String, enum: Object.values(PLANS), default: PLANS.FREE, index: true },
-    premiumUntil: { type: Date, default: null },
-    premiumSource: { type: String, default: null },
+    plan: { type: String, enum: USER_PLAN_IDS, default: USER_PLANS.FREE, index: true },
+    proUntil: { type: Date, default: null },
     language: { type: String, enum: LANGUAGES, default: 'fr' },
     avatar: { type: imageSchema, default: undefined },
     isActive: { type: Boolean, default: true },

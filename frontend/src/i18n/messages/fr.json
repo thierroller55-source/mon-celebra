@@ -89,12 +89,12 @@
     "changePassword": "Changer mon mot de passe",
     "planTitle": "Ma formule",
     "planFree": "Gratuit",
-    "planPremium": "Premium",
-    "planFreeHint": "3 événements actifs, 20 photos par galerie.",
-    "planPremiumHint": "25 événements actifs, 100 photos par galerie et modèles Premium.",
-    "planUntil": "Premium jusqu'au {date}.",
-    "planLifetime": "Premium actif sans date d'expiration.",
-    "planUpgradeHint": "L'activation Premium se fait pour l'instant manuellement par l'équipe Mon Celebra."
+    "planPremium": "Pro",
+    "planFreeHint": "1 événement actif, 5 photos par galerie.",
+    "planPremiumHint": "50 événements actifs, 20 photos par galerie et modèles payants.",
+    "planUntil": "Pro jusqu'au {date}.",
+    "planLifetime": "Pro actif sans date d'expiration.",
+    "planUpgradeHint": "L'activation Pro se fait pour l'instant manuellement par l'équipe Mon Celebra."
   },
   "editor": {
     "posterTitle": "Affiche de l'événement",

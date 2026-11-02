@@ -3,7 +3,7 @@
 > « Chaque moment mérite d'être célébré. »
 >
 > Document maître de référence — Version 1.1 — État d'implémentation
-> Statut : **phases 1 à 3 implémentées ; fondation Premium démarrée (plans, quotas, templates) ; paiement à venir**
+> Statut : **phases 1 à 3 implémentées ; fondation des plans free / event_pass / pro et migration en place ; application complète des droits et paiement à venir**
 > Dernière vérification : 29/10/2026 — 92 tests backend, 129 tests e2e Chromium, lint OK.
 
 ---
@@ -76,10 +76,13 @@ mon-celebra/
 │   └── DEPLOYMENT.md                # guide de deploiement (etape finale)
 │
 ├── backend/
+│   ├── scripts/
+│   │   └── migrate-plans.js         # migration idempotente + sauvegarde JSON
 │   ├── src/
 │   │   ├── config/
 │   │   │   ├── env.js               # chargement + validation des variables d'env
 │   │   │   ├── db.js                # connexion Mongoose
+│   │   │   ├── plans.js             # source unique : plans, limites, prix, droits
 │   │   │   └── constants.js         # categories, types de lieux, statuts, enums
 │   │   ├── models/
 │   │   │   ├── User.js
@@ -89,7 +92,9 @@ mon-celebra/
 │   │   │   ├── Template.js
 │   │   │   ├── Category.js
 │   │   │   ├── Report.js
-│   │   │   └── Notification.js
+│   │   │   ├── Notification.js
+│   │   │   ├── UpgradeRequest.js
+│   │   │   └── PlanAudit.js
 │   │   ├── controllers/
 │   │   │   ├── auth.controller.js
 │   │   │   ├── user.controller.js
@@ -274,7 +279,7 @@ validate, upload] -> controller -> service -> model (Mongoose) -> response JSON
 
 ### 5.1 Collections
 
-`users`, `events`, `rsvps`, `guestbookmessages`, `templates`, `categories`, `reports`, `notifications`.
+`users`, `events`, `rsvps`, `guestbookmessages`, `templates`, `categories`, `reports`, `notifications`, `upgraderequests`, `planaudits`.
 
 ### 5.2 `users`
 
@@ -287,9 +292,8 @@ validate, upload] -> controller -> service -> model (Mongoose) -> response JSON
   passwordHash: String,         // requis (jamais renvoyé)
   phone:     String,
   role:      String,            // enum: ['user','admin'], defaut 'user'
-  plan:      String,            // enum: ['free','premium'], defaut 'free', index
-  premiumUntil: Date,           // expiration Premium (null = sans expiration)
-  premiumSource: String,        // 'manual' (admin) ou futur provider de paiement
+  plan:      String,            // enum: ['free','pro'], defaut 'free', index
+  proUntil:  Date,              // expiration Pro (null = sans expiration)
   language:  String,            // enum: ['fr','en','wo'], defaut 'fr'
   avatar:    { url, publicId },
   isActive:  Boolean,           // defaut true (blocage admin)
@@ -324,6 +328,9 @@ Ajouter une catégorie = insérer un document + décrire ses champs dans `fields
 {
   _id,
   ownerId: ObjectId,            // ref users, index
+  plan:     String,             // enum: ['free','event_pass'], defaut 'free', index
+  premiumUntil: Date,           // fin du Pass Evenement (null = sans expiration)
+  legacy:   Boolean,            // evenement anterieur a la migration (defaut false)
   category: String,             // slug categorie ("mariage")  [extensible]
   slug:     String,             // unique, index  -> /e/marie-et-fatou
   title:    String,             // requis
@@ -336,7 +343,7 @@ Ajouter une catégorie = insérer un document + décrire ses champs dans `fields
 
   location: {                   // lieu principal
     label:     String,          // "Ceremonie religieuse"
-    type:      String,          // enum placeType (voir 5.10)
+    type:      String,          // enum placeType (voir 5.11)
     name:      String,          // "Mosquee Al-Falah"
     address:   String,
     latitude:  Number,
@@ -472,7 +479,23 @@ details = {
 { _id, userId, type, title, message, link, read: Boolean, createdAt }
 ```
 
-### 5.10 Enum `placeType`
+### 5.10 `upgraderequests` / `planaudits`
+
+```js
+// upgraderequests
+{
+  userId, eventId, planRequested, status, reference,
+  payerPhone, transactionRef, amount, decidedBy, decidedAt, note,
+  createdAt / updatedAt
+}
+
+// planaudits (journal immuable, aucune mise a jour/suppression)
+{
+  adminId, targetUserId, eventId, before, after, reason, createdAt
+}
+```
+
+### 5.11 Enum `placeType`
 
 `mosquee`, `eglise`, `salle_reception`, `hotel`, `domicile`, `restaurant`, `exterieur`, `entreprise`, `ecole_universite`, `autre`.
 
@@ -594,9 +617,9 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 - Props normalisées → **changer de template ne perd aucune donnée**.
 - Templates de base : Mariage (Elegant, Romantic, Luxury, Modern, Minimal, Traditional) ; Anniversaire (Fun, Party, Elegant, Modern, Kids) ; Baptême (Baby, Elegant, Minimal, Floral).
 - Admin : activation/désactivation et ajout de templates.
-- `isPremium` est appliqué côté backend : un compte gratuit ne peut pas choisir un template premium (`PREMIUM_REQUIRED`). Un template déjà utilisé reste modifiable après un downgrade.
+- `isPremium` est appliqué côté backend : seules les formules payantes (Pass Evenement, Pro) peuvent choisir un template premium (`PREMIUM_REQUIRED`). Un template déjà utilisé reste modifiable après un downgrade.
 - Le sélecteur de modèle est disponible dans le formulaire de création/édition.
-- Paiement et abonnement automatique restent à implémenter ; l'activation Premium est manuelle via l'admin.
+- Paiement et abonnement automatique restent à implémenter ; l'activation Pro est manuelle via l'admin.
 
 ---
 
@@ -684,7 +707,7 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 - Erreurs vers le client toujours génériques (« Une erreur est survenue… »).
 - SEO public : title unique, meta description, URL propre, Open Graph par événement (cf. note §0).
 - Performance : lazy loading, pagination, cache géocodage, images optimisées, requêtes minimales.
-- Quotas dynamiques par formule : gratuit = 3 événements actifs et 20 photos/événement ; Premium = 25 événements actifs et 100 photos/événement. Taille max d'une photo : 3 Mo avant compression (toutes formules).
+- Quotas dynamiques par formule : gratuit = 1 événement actif et 5 photos/événement ; Pass Evenement = 20 photos ; Pro = 50 événements actifs et 20 photos. Taille max d'une photo : 3 Mo avant compression (toutes formules).
 
 ---
 
@@ -695,7 +718,7 @@ Parcours invité : reçoit le lien/QR → page publique → histoire → galerie
 | **1 — MVP** | Accueil, inscription, connexion, dashboard, création événement, mariage/anniversaire/baptême, templates, photos, lieu, géolocalisation, page publique, URL unique, QR, partage, responsive | Terminée |
 | **2 — v1.0** | RSVP, livre d'or, compte à rebours, confidentialité (3 niveaux), dashboard admin, gestion catégories/templates, SEO/Open Graph, statistiques | Terminée |
 | **3 — Catégories** | Graduation, fiançailles, soirée, baby shower, inauguration, événement pro, commémoration, autres | Terminée |
-| **4 — Premium** | Paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | **Fondation technique faite** (plans, quotas dynamiques, gating templates, toggle admin) ; paiement à venir |
+| **4 — Premium** | Plans free / event_pass / pro, paiement, abonnements, templates premium, domaine personnalisé, SMS, invitations email, stats avancées | **Fondation faite** (catalogue partagé, modèles, migration, droits de base) ; application complète des limites et paiement à venir |
 
 ---
 

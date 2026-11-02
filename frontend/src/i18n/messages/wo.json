@@ -89,12 +89,12 @@
     "changePassword": "Soppil sama baatujàll",
     "planTitle": "Sama formule",
     "planFree": "Moo xam",
-    "planPremium": "Premium",
-    "planFreeHint": "3 evenmaŋ yu dox, 20 nataal ci galeri.",
-    "planPremiumHint": "25 evenmaŋ yu dox, 100 nataal ci galeri ak melo Premium yi.",
-    "planUntil": "Premium ba ci {date}.",
-    "planLifetime": "Premium bi dox na sax.",
-    "planUpgradeHint": "Jëfandikoo Premium bi, ñu koy def ci loxo ba tey ci ekip Mon Celebra."
+    "planPremium": "Pro",
+    "planFreeHint": "1 evenmaŋ bu dox, 5 nataal ci galeri.",
+    "planPremiumHint": "50 evenmaŋ yu dox, 20 nataal ci galeri ak melo yu pay.",
+    "planUntil": "Pro ba ci {date}.",
+    "planLifetime": "Pro bi dox na sax.",
+    "planUpgradeHint": "Jëfandikoo Pro bi, ñu koy def ci loxo ba tey ci ekip Mon Celebra."
   },
   "editor": {
     "posterTitle": "Afiis bu evenman bi",

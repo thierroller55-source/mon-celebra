@@ -30,7 +30,14 @@ import {
   updateTemplate,
   deleteTemplate,
   emailHealth,
+  listUpgradeRequests,
+  getUpgradeRequest,
+  decideUpgradeRequest,
+  adminActivatePlan,
+  adminDeactivatePlan,
+  listPlanAudits,
 } from '../controllers/admin.controller.js';
+import { adminActivateWithoutRequestSchema, adminDecisionSchema } from '../validators/upgrade.schema.js';
 
 const router = Router();
 
@@ -63,3 +70,10 @@ router.put('/templates/:id', validate(templateUpdateSchema), updateTemplate);
 router.delete('/templates/:id', deleteTemplate);
 
 export default router;
+
+router.get('/plans/requests', listUpgradeRequests);
+router.get('/plans/requests/:id', getUpgradeRequest);
+router.patch('/plans/requests/:id', validate(adminDecisionSchema), decideUpgradeRequest);
+router.post('/plans/activate', validate(adminActivateWithoutRequestSchema), adminActivatePlan);
+router.post('/plans/deactivate', adminDeactivatePlan);
+router.get('/plans/audits', listPlanAudits);

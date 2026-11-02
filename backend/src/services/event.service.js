@@ -2,14 +2,19 @@ import bcrypt from 'bcryptjs';
 import { Event } from '../models/Event.js';
 import { Rsvp } from '../models/Rsvp.js';
 import { GuestbookMessage } from '../models/GuestbookMessage.js';
-import { User } from '../models/User.js';
 import { Template } from '../models/Template.js';
 import { ApiError } from '../utils/ApiError.js';
 import { generateUniqueEventSlug } from './slug.service.js';
 import { processImage, processPoster } from './image.service.js';
 import { uploadImage, deleteImage } from './storage.service.js';
-import { getEntitlements } from './plan.service.js';
+import {
+  countActiveEventPasses,
+  getActiveEventLimit,
+  getEventEntitlements,
+  getUserEntitlements,
+} from './plan.service.js';
 import { EVENT_STATUS, EVENT_VISIBILITY } from '../config/constants.js';
+import { PLAN_IDS } from '../config/plans.js';
 import { CATEGORY_FIELDS } from '../config/categoryFields.js';
 
 const ACTIVE_STATUSES = [
@@ -18,19 +23,54 @@ const ACTIVE_STATUSES = [
   EVENT_STATUS.UNPUBLISHED,
 ];
 
-async function loadEntitlements(ownerId) {
-  const owner = await User.findById(ownerId).select('plan premiumUntil');
-  return getEntitlements(owner);
+async function loadEntitlements(ownerId, event = null) {
+  return event
+    ? getEventEntitlements(event)
+    : getUserEntitlements(ownerId);
 }
 
-function assertActiveEventQuota(activeCount, entitlements) {
-  const limit = entitlements.limits.maxActiveEvents;
-  if (activeCount >= limit) {
+async function assertActiveEventQuota(ownerId, entitlements) {
+  const [activeCount, activePasses] = await Promise.all([
+    Event.countDocuments({
+      ownerId,
+      status: { $in: ACTIVE_STATUSES },
+    }),
+    entitlements.plan === PLAN_IDS.PRO ? 0 : countActiveEventPasses(ownerId),
+  ]);
+  const limit = getActiveEventLimit(entitlements, activePasses);
+
+  if (limit !== null && activeCount >= limit) {
     throw ApiError.forbidden(
-      `Limite de ${limit} evenements actifs atteinte (formule ${
-        entitlements.isPremium ? 'Premium' : 'gratuite'
-      }).`,
-      'QUOTA_REACHED',
+      `Limite de ${limit} événements actifs atteinte. Passez au Premium pour créer plus d'événements.`,
+      'PLAN_LIMIT_EVENTS',
+    );
+  }
+}
+
+/** Compte la galerie principale et les galeries des champs de categorie. */
+export function countEventPhotos(event) {
+  const galleryCount = event.gallery?.length || 0;
+  const fields = CATEGORY_FIELDS[event.category]?.fields || [];
+  const details = event.details || {};
+
+  const detailCount = fields.reduce((total, field) => {
+    if (field.type !== 'gallery') return total;
+    const photos = details[field.key];
+    return total + (Array.isArray(photos) ? photos.length : 0);
+  }, 0);
+
+  return galleryCount + detailCount;
+}
+
+function assertPhotoQuota(event, entitlements) {
+  const limit = entitlements.limits.maxPhotosPerEvent;
+  if (limit === null) return;
+
+  const total = countEventPhotos(event);
+  if (total > limit) {
+    throw ApiError.forbidden(
+      `Limite de ${limit} photos par événement atteinte. Passez au Premium pour ajouter plus de photos.`,
+      'PLAN_LIMIT_PHOTOS',
     );
   }
 }
@@ -55,9 +95,9 @@ async function assertTemplateAllowed(templateId, category, entitlements, current
   }
 
   const unchanged = currentTemplateId && String(currentTemplateId) === String(templateId);
-  if (template.isPremium && !entitlements.isPremium && !unchanged) {
+  if (template.isPremium && !entitlements.features.premiumTemplates && !unchanged) {
     throw ApiError.forbidden(
-      'Ce template est reserve aux comptes Premium.',
+      'Ce template est reserve aux formules payantes.',
       'PREMIUM_REQUIRED',
     );
   }
@@ -65,11 +105,7 @@ async function assertTemplateAllowed(templateId, category, entitlements, current
 
 export async function createEvent(ownerId, data) {
   const entitlements = await loadEntitlements(ownerId);
-  const activeCount = await Event.countDocuments({
-    ownerId,
-    status: { $in: ACTIVE_STATUSES },
-  });
-  assertActiveEventQuota(activeCount, entitlements);
+  await assertActiveEventQuota(ownerId, entitlements);
   await assertTemplateAllowed(data.templateId, data.category, entitlements);
 
   const slug = await generateUniqueEventSlug(data.title);
@@ -103,7 +139,7 @@ export async function createEvent(ownerId, data) {
 
 export async function updateEvent(event, data) {
   if (data.templateId) {
-    const entitlements = await loadEntitlements(event.ownerId);
+    const entitlements = await loadEntitlements(event.ownerId, event);
     await assertTemplateAllowed(
       data.templateId,
       data.category || event.category,
@@ -193,16 +229,14 @@ export async function removeMainImage(event) {
 }
 
 export async function addPhotos(event, files) {
-  const entitlements = await loadEntitlements(event.ownerId);
-  const limit = entitlements.limits.maxGalleryPhotos;
+  const entitlements = await loadEntitlements(event.ownerId, event);
+  const limit = entitlements.limits.maxPhotosPerEvent;
   const current = event.gallery?.length || 0;
-  const remaining = limit - current;
+  const remaining = limit === null ? files.length : limit - current;
   if (remaining <= 0) {
-    throw ApiError.badRequest(
-      `Limite de ${limit} photos atteinte (formule ${
-        entitlements.isPremium ? 'Premium' : 'gratuite'
-      }).`,
-      'GALLERY_FULL',
+    throw ApiError.forbidden(
+      `Limite de ${limit} photos par événement atteinte. Passez au Premium pour ajouter plus de photos.`,
+      'PLAN_LIMIT_PHOTOS',
     );
   }
 
@@ -240,11 +274,7 @@ export async function removePhoto(event, photoId) {
 
 export async function duplicateEvent(ownerId, event) {
   const entitlements = await loadEntitlements(ownerId);
-  const activeCount = await Event.countDocuments({
-    ownerId,
-    status: { $in: ACTIVE_STATUSES },
-  });
-  assertActiveEventQuota(activeCount, entitlements);
+  await assertActiveEventQuota(ownerId, entitlements);
   await assertTemplateAllowed(event.templateId, event.category, entitlements);
 
   const baseTitle = event.title || 'Evenement duplique';

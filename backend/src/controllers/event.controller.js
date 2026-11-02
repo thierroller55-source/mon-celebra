@@ -126,6 +126,13 @@ function csvCell(value) {
 }
 
 export const exportRsvp = asyncHandler(async (req, res) => {
+  const entitlements = await getEventEntitlements(req.event);
+  if (!entitlements.features.exportCsv) {
+    throw ApiError.forbidden(
+      "L'export CSV est réservé aux formules payantes. Passez au Premium pour exporter la liste des confirmations.",
+      'PLAN_FEATURE_LOCKED',
+    );
+  }
   const rsvps = await Rsvp.find({ eventId: req.event._id }).sort({ createdAt: 1 });
 
   const header = ['Nom', 'Email', 'Telephone', 'Accompagnants', 'Reponse', 'Reponse hote', 'Message', 'Date'];

@@ -24,9 +24,9 @@ export default function MonCompte() {
   const [cooldown, setCooldown] = useState(0);
   const cooldownRef = useRef(null);
 
-  const isPremium =
-    user?.plan === 'premium' &&
-    (!user.premiumUntil || new Date(user.premiumUntil).getTime() > Date.now());
+  const isPro =
+    user?.plan === 'pro' &&
+    (!user.proUntil || new Date(user.proUntil).getTime() > Date.now());
 
   const [passwords, setPasswords] = useState(EMPTY_PASSWORD);
   const [savingPassword, setSavingPassword] = useState(false);
@@ -153,28 +153,28 @@ export default function MonCompte() {
         <div className="flex flex-wrap items-center gap-2">
           <Crown
             size={20}
-            className={isPremium ? 'text-celebra-gold' : 'text-celebra-dark/40'}
+            className={isPro ? 'text-celebra-gold' : 'text-celebra-dark/40'}
           />
           <h2 className="text-lg font-semibold">{t('account.planTitle')}</h2>
           <span
             className={`rounded-full px-2 py-0.5 text-xs ${
-              isPremium
+              isPro
                 ? 'bg-celebra-gold/15 text-celebra-gold'
                 : 'bg-celebra-dark/5 text-celebra-dark/60'
             }`}
           >
-            {isPremium ? t('account.planPremium') : t('account.planFree')}
+            {isPro ? t('account.planPremium') : t('account.planFree')}
           </span>
         </div>
         <p className="mt-2 text-sm text-celebra-dark/70">
-          {isPremium ? t('account.planPremiumHint') : t('account.planFreeHint')}
+          {isPro ? t('account.planPremiumHint') : t('account.planFreeHint')}
         </p>
-        {isPremium ? (
+        {isPro ? (
           <p className="mt-1 text-xs text-celebra-dark/60">
-            {user.premiumUntil
+            {user.proUntil
               ? t('account.planUntil', {
                   date: new Intl.DateTimeFormat(locale, { dateStyle: 'long' }).format(
-                    new Date(user.premiumUntil),
+                    new Date(user.proUntil),
                   ),
                 })
               : t('account.planLifetime')}

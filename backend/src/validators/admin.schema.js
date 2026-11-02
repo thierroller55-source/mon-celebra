@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { PLANS } from '../config/constants.js';
+import { USER_PLAN_IDS } from '../config/plans.js';
 
 export const reportStatusSchema = z.object({
   status: z.enum(['open', 'closed']),
@@ -13,8 +13,8 @@ const slugField = z
   .max(60);
 
 export const userPlanSchema = z.object({
-  plan: z.enum(Object.values(PLANS)),
-  premiumUntil: z.coerce.date().nullable().optional(),
+  plan: z.enum(USER_PLAN_IDS),
+  proUntil: z.coerce.date().nullable().optional(),
 });
 
 export const categoryCreateSchema = z.object({

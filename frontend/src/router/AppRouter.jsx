@@ -30,12 +30,14 @@ import Commemoration from '../pages/create/Commemoration.jsx';
 import Autres from '../pages/create/Autres.jsx';
 import EventPublic from '../pages/public/EventPublic.jsx';
 import NotFound from '../pages/public/NotFound.jsx';
+import Tarifs from '../pages/public/Tarifs.jsx';
 import AdminHome from '../pages/admin/AdminHome.jsx';
 import AdminUsers from '../pages/admin/AdminUsers.jsx';
 import AdminEvents from '../pages/admin/AdminEvents.jsx';
 import AdminReports from '../pages/admin/AdminReports.jsx';
 import AdminCategories from '../pages/admin/AdminCategories.jsx';
 import AdminTemplates from '../pages/admin/AdminTemplates.jsx';
+import AdminPlans from '../pages/admin/AdminPlans.jsx';
 import MonCompte from '../pages/dashboard/MonCompte.jsx';
 
 /** Garde de locale : n'accepte que fr | en | wo, sinon redirige vers la racine. */
@@ -56,6 +58,7 @@ function renderRouteTree() {
         <Route index element={<Home />} />
         <Route path="categories" element={<ChooseCategory />} />
         <Route path="e/:slug" element={<EventPublic />} />
+        <Route path="tarifs" element={<Tarifs />} />
         <Route path="connexion" element={<Login />} />
         <Route path="inscription" element={<Register />} />
         <Route path="inscription-invite" element={<Signup />} />
@@ -92,6 +95,7 @@ function renderRouteTree() {
           <Route path="signalements" element={<AdminReports />} />
           <Route path="categories" element={<AdminCategories />} />
           <Route path="templates" element={<AdminTemplates />} />
+          <Route path="plans" element={<AdminPlans />} />
         </Route>
       </Route>
     </>
@@ -105,6 +109,9 @@ export default function AppRouter() {
 
       <Route path=":locale" element={<LocaleLayout />}>
         {renderRouteTree()}
+        <Route element={<PublicLayout />}>
+          <Route path="tarifs" element={<Tarifs />} />
+        </Route>
       </Route>
 
       <Route path="*" element={<NotFound />} />

@@ -35,6 +35,9 @@ const schema = z.object({
   MAIL_FROM: z.string().email().default('no-reply@moncelebra.com'),
   MAIL_FROM_NAME: z.string().default(APP_NAME),
   MAIL_REPLY_TO: optionalString,
+  PAYMENT_WAVE_LINK: optionalString,
+  PAYMENT_ORANGE_NUMBER: optionalString,
+  CONTACT_WHATSAPP: optionalString,
 }).superRefine((data, ctx) => {
   const cloudinaryVars = [
     data.CLOUDINARY_CLOUD_NAME,
@@ -96,5 +99,12 @@ export const env = {
     from: parsed.data.MAIL_FROM,
     fromName: parsed.data.MAIL_FROM_NAME,
     replyTo: parsed.data.MAIL_REPLY_TO,
+  },
+  payments: {
+    waveLink: parsed.data.PAYMENT_WAVE_LINK || null,
+    orangeNumber: parsed.data.PAYMENT_ORANGE_NUMBER || null,
+  },
+  contact: {
+    whatsapp: parsed.data.CONTACT_WHATSAPP || null,
   },
 };
