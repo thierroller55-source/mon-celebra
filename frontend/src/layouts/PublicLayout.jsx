@@ -71,7 +71,10 @@ export default function PublicLayout() {
 
       <footer className="border-t border-celebra-dark/10 bg-celebra-paper py-6 text-center text-sm text-celebra-dark/60">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 sm:flex-row sm:justify-between">
-          <p>&copy; {new Date().getFullYear()} {t('common.appName')} — {t('common.footerTagline')}</p>
+          <div className="flex items-center gap-3">
+            <p>&copy; {new Date().getFullYear()} {t('common.appName')} — {t('common.footerTagline')}</p>
+            <Link to={lp('/tarifs')} className="text-celebra-gold hover:underline sm:hidden">Tarifs</Link>
+          </div>
           <a
             href="https://wa.me/221765711533?text=Bonjour%2C%20je%20souhaite%20avoir%20plus%20d%27informations%20sur%20votre%20site%20Mon%20Celebra."
             target="_blank"
