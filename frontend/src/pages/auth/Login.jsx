@@ -14,6 +14,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [guestLoading, setGuestLoading] = useState(false);
 
   const handleChange = (e) =>
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -103,17 +104,21 @@ export default function Login() {
         <button
           type="button"
           className="btn-outline w-full"
+          disabled={submitting || guestLoading}
           onClick={async () => {
             setError('');
+            setGuestLoading(true);
             try {
               await guest();
               navigate('/dashboard');
             } catch (err) {
               setError(getErrorMessage(err));
+            } finally {
+              setGuestLoading(false);
             }
           }}
         >
-          Continuer en tant qu'invité
+          {guestLoading ? 'Connexion...' : "Continuer en tant qu'invité"}
         </button>
       </form>
 
