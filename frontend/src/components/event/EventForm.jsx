@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Loader2, ImagePlus, X, LocateFixed, Link2, Loader, Crown, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import UpgradeDialog from '../plans/UpgradeDialog.jsx';
 import CategoryForm from '../form/CategoryForm.jsx';
 import MapPicker from '../map/MapPicker.jsx';
 import AddressSearch from '../map/AddressSearch.jsx';
@@ -90,6 +91,7 @@ export default function EventForm({
   const [locationNote, setLocationNote] = useState('');
   const [templates, setTemplates] = useState([]);
   const [templatesLoading, setTemplatesLoading] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   useEffect(() => {
     setForm(buildInitial(categorySlug, event));
@@ -458,7 +460,7 @@ export default function EventForm({
                   key={tpl._id}
                   type="button"
                   disabled={locked}
-                  onClick={() => selectTemplate(tpl)}
+                  onClick={() => (locked ? setUpgradeOpen(true) : selectTemplate(tpl))}
                   title={locked ? t('editor.templateLocked') : undefined}
                   aria-pressed={selected}
                   className={`flex items-center justify-between gap-3 rounded-xl border px-4 py-3 text-left text-sm transition ${
@@ -718,5 +720,6 @@ export default function EventForm({
         </button>
       </div>
     </form>
+    <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} planRequested="pro" />
   );
 }
