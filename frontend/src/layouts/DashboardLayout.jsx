@@ -1,6 +1,6 @@
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { LayoutDashboard, Plus, LogOut, Home, ShieldCheck, User } from 'lucide-react';
+import { LayoutDashboard, Plus, LogOut, Home, ShieldCheck, User, CreditCard } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth.js';
 import { useLocalePath } from '../context/LocaleContext.jsx';
 import NotificationBell from '../components/notifications/NotificationBell.jsx';
@@ -55,6 +55,10 @@ export default function DashboardLayout() {
           <NavLink to={lp('/dashboard/compte')} className={navClass}>
             <User size={16} />
             {t('dashboard.account')}
+          </NavLink>
+          <NavLink to={lp('/tarifs')} className={navClass}>
+            <CreditCard size={16} />
+            Tarifs
           </NavLink>
         </nav>
       </aside>
