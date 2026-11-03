@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { PLAN_CATALOG, PUBLIC_PLAN_IDS } from '../../lib/plans.js';
 import PlanCard from '../../components/plans/PlanCard.jsx';
 import { useLocale } from '../../context/LocaleContext.jsx';
+import UpgradeDialog from '../../components/plans/UpgradeDialog.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const FAQ = [
   { q: 'Que se passe-t-il à la fin de mon Pass ?', a: "À l'expiration, une période de grâce de 30 jours s'applique, puis les limites du plan gratuit reprennent. Aucune donnée n'est supprimée ; les fonctions premium se verrouillent." },
@@ -14,6 +16,9 @@ const FAQ = [
 
 export default function Tarifs() {
   const { locale } = useLocale();
+  const navigate = useNavigate();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [upgradePlan, setUpgradePlan] = useState('event_pass');
   const [lang] = useState(locale || 'fr');
 
   const plans = useMemo(() => PUBLIC_PLAN_IDS.map((id) => PLAN_CATALOG[id]).filter(Boolean), []);
@@ -52,7 +57,22 @@ export default function Tarifs() {
               priceFcfa={price}
               highlighted={highlighted}
               ctaLabel={ctaLabel}
-              onCta={() => {}}
+              onCta={() => {
+                if (plan.id === 'free') {
+                  navigate('/dashboard/creer');
+                  return;
+                }
+                if (plan.id === 'event_pass') {
+                  setUpgradePlan('event_pass');
+                  setUpgradeOpen(true);
+                  return;
+                }
+                if (plan.id === 'pro') {
+                  setUpgradePlan('pro');
+                  setUpgradeOpen(true);
+                  return;
+                }
+              }}
               features={[
                 plan.id === 'free' ? '1 événement actif' : plan.id === 'event_pass' ? '1 événement par pass' : '50 événements actifs (usage raisonnable)',
                 `${plan.limits.maxPhotosPerEvent} photos par événement`,
@@ -131,8 +151,9 @@ export default function Tarifs() {
           <Link to="/contact" className="btn-outline">Contact</Link>
         </div>
       </section>
-    </div>
-  );
+    <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} planRequested={upgradePlan} />
+  </div>
+);
 }
 
 export function getTarifsMetadata(locale = 'fr') {
