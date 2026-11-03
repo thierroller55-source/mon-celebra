@@ -25,6 +25,9 @@ export default function PublicLayout() {
           </Link>
 
           <nav className="flex flex-wrap items-center gap-2" aria-label={t('common.dashboard')}>
+            <Link to={lp('/tarifs')} className="btn-outline hidden sm:inline-flex">
+              Tarifs
+            </Link>
             {user ? (
               <>
                 <Link to={lp('/dashboard')} className="btn-primary">
