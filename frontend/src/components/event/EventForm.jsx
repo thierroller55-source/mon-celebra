@@ -275,7 +275,8 @@ export default function EventForm({
   if (!category) return null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6" noValidate>
+    <>
+      <form onSubmit={handleSubmit} className="space-y-6" noValidate>
       {error && (
         <p role="alert" className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -719,7 +720,8 @@ export default function EventForm({
           {submitting ? t('editor.submitting') : submitLabel || t('editor.submitCreate')}
         </button>
       </div>
-    </form>
-    <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} planRequested="pro" />
+      </form>
+      <UpgradeDialog open={upgradeOpen} onClose={() => setUpgradeOpen(false)} planRequested="pro" />
+    </>
   );
 }
