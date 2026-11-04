@@ -39,19 +39,61 @@ test.after(async () => {
 
 test('free user cannot create second event', async () => {
   const { api } = await createUserClient(baseUrl);
-  const c1 = await api.post('/events', { category: 'graduation', title: 'E1', details: { graduateName: 'A' } });
-  assert.ok(c1.status === 201 || c1.status === 200);
-  const c2 = await api.post('/events', { category: 'graduation', title: 'E2', details: { graduateName: 'B' } });
+  const c1 = await api.post('/events', {
+    category: 'graduation',
+    title: 'Evenement 1',
+    details: { graduateName: 'A' },
+  });
+  assert.equal(c1.status, 201, JSON.stringify(c1.body));
+  const c2 = await api.post('/events', {
+    category: 'graduation',
+    title: 'Evenement 2',
+    details: { graduateName: 'B' },
+  });
   assert.equal(c2.status, 403);
 });
 
-test('guest can still create rsvp', async () => {
-  const { api } = await createUserClient(baseUrl);
-  const c = await api.post('/events', { category: 'graduation', title: 'Pub', details: { graduateName: 'X' } });
-  assert.ok(c.status === 201 || c.status === 200);
+test('un compte connecte peut confirmer sa presence', async () => {
+  const { api: host } = await createUserClient(baseUrl);
+  const c = await host.post('/events', {
+    category: 'graduation',
+    title: 'Soiree publique',
+    details: { graduateName: 'X' },
+  });
+  assert.equal(c.status, 201, JSON.stringify(c.body));
+  const published = await host.post(`/events/${c.body.data.event._id}/publish`);
+  assert.equal(published.status, 200, JSON.stringify(published.body));
+
   const slug = c.body.data.event.slug;
-  const pub = await api.post(`/public/events/${slug}/rsvp`, { guestsCount: 1, response: 'yes' });
-  assert.ok(pub.status === 201 || pub.status === 200 || pub.status === 403);
+  const visitor = await createUserClient(baseUrl);
+  const pub = await visitor.api.post(`/public/events/${slug}/rsvp`, {
+    guestsCount: 1,
+    response: 'yes',
+  });
+  assert.equal(pub.status, 201, JSON.stringify(pub.body));
+});
+
+test('une session invite ne peut pas confirmer sa presence', async () => {
+  const { api: host } = await createUserClient(baseUrl);
+  const c = await host.post('/events', {
+    category: 'graduation',
+    title: 'Soiree invite',
+    details: { graduateName: 'Y' },
+  });
+  assert.equal(c.status, 201, JSON.stringify(c.body));
+  await host.post(`/events/${c.body.data.event._id}/publish`);
+
+  const guest = createApiClient(baseUrl);
+  const session = await guest.post('/auth/guest');
+  assert.equal(session.status, 201, JSON.stringify(session.body));
+  guest.setToken(session.body.data.accessToken);
+
+  const pub = await guest.post(`/public/events/${c.body.data.event.slug}/rsvp`, {
+    guestsCount: 1,
+    response: 'yes',
+  });
+  assert.equal(pub.status, 403);
+  assert.equal(pub.body.code, 'ACCOUNT_REQUIRED');
 });
 
 test('admin can activate without request', async () => {

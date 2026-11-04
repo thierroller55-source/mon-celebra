@@ -7,6 +7,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { generateUniqueEventSlug } from './slug.service.js';
 import { processImage, processPoster } from './image.service.js';
 import { uploadImage, deleteImage } from './storage.service.js';
+import { deletePosterAssets, removeEventPoster } from './poster.service.js';
 import {
   countActiveEventPasses,
   getActiveEventLimit,
@@ -188,6 +189,7 @@ export async function deleteEvent(event) {
   ].filter(Boolean);
 
   await Promise.allSettled(publicIds.map((id) => deleteImage(id)));
+  await deletePosterAssets(event);
 
   await Promise.all([
     Rsvp.deleteMany({ eventId: event._id }),
@@ -218,14 +220,7 @@ export async function setMainImage(event, file) {
 }
 
 export async function removeMainImage(event) {
-  const previous = event.mainImage?.publicId;
-
-  event.set('mainImage', undefined);
-  await event.save();
-
-  if (previous) await deleteImage(previous).catch(() => {});
-
-  return event;
+  return removeEventPoster(event);
 }
 
 export async function addPhotos(event, files) {

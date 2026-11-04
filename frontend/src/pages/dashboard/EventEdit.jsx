@@ -1,14 +1,23 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { eventService } from '../../services/event.service.js';
 import { categoryService } from '../../services/category.service.js';
 import { getErrorMessage, getFieldErrors } from '../../services/api.js';
 import EventForm from '../../components/event/EventForm.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
+
+function qrSignature(qr) {
+  if (!qr) return '';
+  return [qr.x, qr.y, qr.size, qr.position, qr.captionVisible].join('|');
+}
 
 export default function EventEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const toast = useToast();
 
   const [event, setEvent] = useState(null);
   const [category, setCategory] = useState(null);
@@ -33,16 +42,39 @@ export default function EventEdit() {
     };
   }, [id]);
 
-  const handleSubmit = async (payload, { posterFile, removePoster }) => {
+  const handleSubmit = async (
+    payload,
+    { posterFile, removePoster, posterQr, rightsConfirmed },
+  ) => {
     setError('');
     setFieldErrors({});
+    if (posterFile && !rightsConfirmed) {
+      setError("Vous devez confirmer avoir le droit d'utiliser ce visuel.");
+      return;
+    }
     setSubmitting(true);
     try {
       await eventService.update(id, payload);
+      let posterResult = null;
+      const hasStoredPoster = Boolean(event?.poster?.sourceUrl);
+      const qrChanged =
+        posterQr &&
+        hasStoredPoster &&
+        qrSignature(posterQr) !== qrSignature(event?.poster?.qr);
+
       if (posterFile) {
-        await eventService.uploadMainImage(id, posterFile);
-      } else if (removePoster && event?.mainImage) {
-        await eventService.removeMainImage(id);
+        posterResult = await eventService.uploadEventPoster(id, posterFile, {
+          rightsConfirmed,
+          qr: posterQr,
+        });
+      } else if (removePoster && (event?.poster?.composedUrl || event?.mainImage)) {
+        await eventService.removeEventPoster(id);
+      } else if (qrChanged) {
+        posterResult = await eventService.updatePosterSettings(id, { qr: posterQr });
+      }
+
+      if (posterResult?.posterQrReadable === false) {
+        toast.info(t('poster.readabilityWarning'));
       }
       navigate(`/dashboard/evenements/${id}`);
     } catch (err) {

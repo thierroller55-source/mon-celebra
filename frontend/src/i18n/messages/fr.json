@@ -98,12 +98,12 @@
   },
   "editor": {
     "posterTitle": "Affiche de l'événement",
-    "posterHint": "Importez votre affiche (affiche, flyer, faire-part). Elle sera affichée telle quelle à vos invités. Formats acceptés : JPEG, PNG ou WebP (max 8 Mo).",
+    "posterHint": "Importez votre affiche (affiche, flyer, faire-part). Votre QR code y sera ajouté automatiquement. Formats acceptés : JPEG, PNG ou WebP (10 Mo max, 800 px de large minimum).",
     "posterAlt": "Affiche",
     "posterReplace": "Remplacer l'affiche",
     "posterRemove": "Supprimer l'affiche",
     "posterImport": "Importer votre affiche",
-    "posterFormats": "JPEG, PNG ou WebP - 8 Mo max",
+    "posterFormats": "JPEG, PNG ou WebP - 10 Mo max - 800 px min",
     "eventSection": "Événement",
     "title": "Titre",
     "titlePlaceholder": "Titre de l'événement",
@@ -154,7 +154,13 @@
     "templateDefault": "Style par défaut",
     "templatePremium": "Premium",
     "templateLocked": "Passez en Premium pour utiliser ce modèle.",
-    "templateLoading": "Chargement des modèles..."
+    "templateLoading": "Chargement des modèles...",
+    "posterInvalidType": "Format non pris en charge. Utilisez un fichier JPEG, PNG ou WebP.",
+    "posterTooLarge": "Cette image dépasse 10 Mo. Choisissez un fichier plus léger.",
+    "posterTooSmall": "Cette image est trop petite ({width} px de large). La largeur minimale est de 800 px.",
+    "posterRights": "Je confirme avoir le droit d'utiliser ce visuel.",
+    "posterRightsHint": "N'importez pas d'image trouvée sur Internet sans autorisation.",
+    "posterRightsRequired": "Cochez la case pour confirmer que vous avez le droit d'utiliser cette affiche."
   },
   "publicPage": {
     "loading": "Chargement de l'événement...",
@@ -190,7 +196,18 @@
     "positionCenter": "Bas centre",
     "noPoster": "Aucune affiche n'a été importée pour cet événement.",
     "draftWarning": "Cet événement n'est pas encore publié : le QR code ne fonctionnera qu'après publication.",
-    "alt": "Affiche de {title}"
+    "alt": "Affiche de {title}",
+    "editorTitle": "Placez le QR code",
+    "editorHint": "Faites glisser le QR code ou utilisez les boutons. Le QR sera ajouté sur l'affiche finale.",
+    "presetTopRight": "Haut droite",
+    "restoreRecommended": "Rétablir l'emplacement conseillé",
+    "dragQr": "Déplacer le QR code (flèches du clavier)",
+    "resizeQr": "Redimensionner le QR code",
+    "captionToggle": "Afficher la mention sous le QR",
+    "dragHint": "Glissez pour déplacer, tirez le coin pour agrandir.",
+    "overlapWarning": "Ce placement peut masquer du texte important de votre affiche. Vérifiez le rendu final.",
+    "smallWarning": "Le QR code est petit : scannez l'affiche finale pour vérifier qu'il reste lisible.",
+    "readabilityWarning": "Le QR code n'a pas pu être détecté sur l'affiche. Essayez une taille plus grande ou un emplacement plus dégagé."
   },
   "errors": {
     "generic": "Une erreur est survenue. Veuillez réessayer.",

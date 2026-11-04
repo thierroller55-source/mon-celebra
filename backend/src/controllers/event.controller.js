@@ -4,8 +4,10 @@ import { GuestbookMessage } from '../models/GuestbookMessage.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import * as eventService from '../services/event.service.js';
+import * as posterService from '../services/poster.service.js';
 import { fetchImageBytes } from '../services/storage.service.js';
 import { notify } from '../services/notification.service.js';
+import { getEventEntitlements } from '../services/plan.service.js';
 
 export const listEvents = asyncHandler(async (req, res) => {
   const events = await Event.find({ ownerId: req.user.id }).sort({ createdAt: -1 });
@@ -61,19 +63,78 @@ const POSTER_MIME = {
   webp: 'image/webp',
 };
 
-/** Restitue les octets de l'affiche via l'API (same-origin, sans CORS). */
+function sendPosterBuffer(res, buffer, publicId, url, cache = 'private, max-age=300') {
+  const ext = (publicId || url || '').split('.').pop().toLowerCase();
+  res.set('Content-Type', POSTER_MIME[ext] || 'application/octet-stream');
+  res.set('Cache-Control', cache);
+  res.send(buffer);
+}
+
+/** Restitue les octets de l'affiche source via l'API (same-origin, sans CORS). */
 export const getEventPoster = asyncHandler(async (req, res) => {
-  const image = req.event.mainImage;
+  const image =
+    (req.event.poster?.sourceUrl && {
+      url: req.event.poster.sourceUrl,
+      publicId: req.event.poster.sourcePublicId,
+    }) ||
+    req.event.mainImage;
   if (!image?.url) {
     throw ApiError.notFound("Aucune affiche pour cet evenement.", 'NO_POSTER');
   }
 
   const buffer = await fetchImageBytes(image);
-  const ext = (image.publicId || image.url).split('.').pop().toLowerCase();
+  sendPosterBuffer(res, buffer, image.publicId, image.url);
+});
 
-  res.set('Content-Type', POSTER_MIME[ext] || 'application/octet-stream');
-  res.set('Cache-Control', 'private, max-age=300');
-  res.send(buffer);
+/** Restitue l'image composee (celle qui sera telechargee). */
+export const getComposedPoster = asyncHandler(async (req, res) => {
+  const image = req.event.poster;
+  if (!image?.composedUrl) {
+    throw ApiError.notFound("Aucune affiche composee pour cet evenement.", 'NO_COMPOSED_POSTER');
+  }
+
+  const buffer = await fetchImageBytes({
+    url: image.composedUrl,
+    publicId: image.composedPublicId,
+  });
+  sendPosterBuffer(res, buffer, image.composedPublicId, image.composedUrl);
+});
+
+export const uploadEventPoster = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw ApiError.badRequest('Aucune affiche recue.', 'NO_FILE');
+  }
+
+  const entitlements = await getEventEntitlements(req.event);
+  const maxBytes = (entitlements.limits.maxPosterFileMb || 8) * 1024 * 1024;
+  const result = await posterService.importEventPoster(req.event, req.file, {
+    qr: req.body.qr,
+    maxBytes,
+  });
+
+  res.status(201).json({
+    success: true,
+    data: {
+      event: result.event,
+      posterQrReadable: result.qrReadable,
+    },
+  });
+});
+
+export const updateEventPosterSettings = asyncHandler(async (req, res) => {
+  const result = await posterService.updateEventPosterSettings(req.event, req.body);
+  res.json({
+    success: true,
+    data: {
+      event: result.event,
+      posterQrReadable: result.qrReadable,
+    },
+  });
+});
+
+export const deleteEventPoster = asyncHandler(async (req, res) => {
+  const event = await posterService.removeEventPoster(req.event);
+  res.json({ success: true, data: { event } });
 });
 
 export const addPhotos = asyncHandler(async (req, res) => {

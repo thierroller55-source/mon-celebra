@@ -104,6 +104,22 @@ test('upload refuse : fichier trop volumineux -> 400', async () => {
   assert.equal(res.body.code, 'UPLOAD_ERROR');
 });
 
+async function uploadEventPoster(eventId, blob, filename, { rights = 'true', qr } = {}) {
+  const fd = new FormData();
+  fd.append('image', blob, filename);
+  if (rights !== undefined) fd.append('rightsConfirmed', rights);
+  if (qr !== undefined) fd.append('qr', JSON.stringify(qr));
+  const res = await fetch(
+    `http://127.0.0.1:${server.address().port}/api/events/${eventId}/poster`,
+    {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${authToken}` },
+      body: fd,
+    },
+  );
+  return { status: res.status, body: await res.json().catch(() => ({})) };
+}
+
 async function uploadPoster(eventId, blob, filename) {
   const fd = new FormData();
   fd.append('image', blob, filename);
@@ -172,6 +188,102 @@ test('affiche : upload haute qualite, format preserve, remplacement et suppressi
   const del = await api.delete(`/events/${id}/main-image`);
   assert.equal(del.status, 200);
   assert.equal(del.body.data.event.mainImage, undefined);
+
+  await api.delete(`/events/${id}`);
+});
+
+
+test('affiche QR : import, composition, reglages, lecture et suppression', async () => {
+  const created = await api.post('/events', {
+    category: 'mariage',
+    title: 'Affiche QR de test',
+    date: '2026-10-01',
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.event._id;
+
+  const png = await sharp({
+    create: {
+      width: 1200,
+      height: 1800,
+      channels: 4,
+      background: { r: 245, g: 240, b: 230, alpha: 1 },
+    },
+  })
+    .png()
+    .toBuffer();
+
+  const imported = await uploadEventPoster(
+    id,
+    new Blob([png], { type: 'image/png' }),
+    'affiche-qr.png',
+  );
+  assert.equal(imported.status, 201, JSON.stringify(imported.body));
+  const event = imported.body.data.event;
+  assert.ok(event.poster.sourceUrl.includes('/uploads/'));
+  assert.ok(event.poster.composedUrl.includes('/uploads/'));
+  assert.equal(event.poster.mode, 'upload');
+  assert.equal(event.mainImage.url, event.poster.sourceUrl);
+  assert.equal(imported.body.data.posterQrReadable, true);
+
+  const composed = await fetch(
+    `http://127.0.0.1:${server.address().port}/api/events/${id}/poster/composed`,
+    { headers: { Authorization: `Bearer ${authToken}` } },
+  );
+  assert.equal(composed.status, 200);
+  assert.ok((await composed.arrayBuffer()).byteLength > 0);
+
+  const updated = await api.put(`/events/${id}/poster`, {
+    qr: { x: 0.1, y: 0.1, size: 0.2, position: 'custom', captionVisible: false },
+  });
+  assert.equal(updated.status, 200, JSON.stringify(updated.body));
+  assert.equal(updated.body.data.event.poster.qr.position, 'custom');
+  assert.equal(updated.body.data.event.poster.qr.captionVisible, false);
+  assert.equal(updated.body.data.posterQrReadable, true);
+
+  const del = await api.delete(`/events/${id}/poster`);
+  assert.equal(del.status, 200);
+  assert.equal(del.body.data.event.poster, undefined);
+  assert.equal(del.body.data.event.mainImage, undefined);
+
+  await api.delete(`/events/${id}`);
+});
+
+test('affiche QR : droits obligatoires et largeur minimale', async () => {
+  const created = await api.post('/events', {
+    category: 'mariage',
+    title: 'Affiche QR refusee',
+    date: '2026-11-01',
+  });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  const id = created.body.data.event._id;
+
+  const valid = await sharp({
+    create: { width: 900, height: 1200, channels: 3, background: '#FFFFFF' },
+  })
+    .png()
+    .toBuffer();
+
+  const noRights = await uploadEventPoster(
+    id,
+    new Blob([valid], { type: 'image/png' }),
+    'sans-droits.png',
+    { rights: 'false' },
+  );
+  assert.equal(noRights.status, 400);
+
+  const tiny = await sharp({
+    create: { width: 400, height: 500, channels: 3, background: '#FFFFFF' },
+  })
+    .png()
+    .toBuffer();
+  const tooSmall = await uploadEventPoster(
+    id,
+    new Blob([tiny], { type: 'image/png' }),
+    'trop-petite.png',
+  );
+  assert.equal(tooSmall.status, 400);
+  assert.equal(tooSmall.body.code, 'POSTER_TOO_SMALL');
 
   await api.delete(`/events/${id}`);
 });

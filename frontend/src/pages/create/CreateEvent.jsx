@@ -1,14 +1,18 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { categoryService } from '../../services/category.service.js';
 import { eventService } from '../../services/event.service.js';
 import { getErrorMessage, getFieldErrors } from '../../services/api.js';
 import EventForm from '../../components/event/EventForm.jsx';
 import { useAuthContext } from '../../context/AuthContext.jsx';
+import { useToast } from '../../context/ToastContext.jsx';
 
 export default function CreateEvent({ categorySlug: categorySlugProp }) {
   const { user, guest } = useAuthContext();
+  const { t } = useTranslation();
+  const toast = useToast();
   const params = useParams();
   const categorySlug = categorySlugProp || params.categorySlug;
   const navigate = useNavigate();
@@ -42,7 +46,10 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
     };
   }, [categorySlug]);
 
-  const handleSubmit = async (payload, { files, publishNow, posterFile }) => {
+  const handleSubmit = async (
+    payload,
+    { files, publishNow, posterFile, posterQr, rightsConfirmed },
+  ) => {
     if (!user) {
       try {
         await guest();
@@ -60,6 +67,10 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
       setError("L'affiche de l'evenement est obligatoire.");
       return;
     }
+    if (!rightsConfirmed) {
+      setError("Vous devez confirmer avoir le droit d'utiliser ce visuel.");
+      return;
+    }
     if (payload.visibility === 'password' && !payload.accessCode) {
       setError("Un code d'acces est requis pour un evenement protege.");
       return;
@@ -68,7 +79,14 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
     setSubmitting(true);
     try {
       let event = await eventService.create(payload);
-      event = await eventService.uploadMainImage(event._id, posterFile);
+      const posterResult = await eventService.uploadEventPoster(event._id, posterFile, {
+        rightsConfirmed,
+        qr: posterQr,
+      });
+      event = posterResult.event;
+      if (posterResult.posterQrReadable === false) {
+        toast.info(t('poster.readabilityWarning'));
+      }
       if (publishNow) {
         event = await eventService.publish(event._id);
       }

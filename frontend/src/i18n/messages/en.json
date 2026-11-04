@@ -98,12 +98,12 @@
   },
   "editor": {
     "posterTitle": "Event poster",
-    "posterHint": "Upload your poster (poster, flyer, invitation). It will be shown as is to your guests. Accepted formats: JPEG, PNG or WebP (max 8 MB).",
+    "posterHint": "Upload your poster (poster, flyer, invitation). Your QR code will be added automatically. Accepted formats: JPEG, PNG or WebP (max 10 MB, min width 800 px).",
     "posterAlt": "Poster",
     "posterReplace": "Replace poster",
     "posterRemove": "Delete poster",
     "posterImport": "Upload your poster",
-    "posterFormats": "JPEG, PNG or WebP - 8 MB max",
+    "posterFormats": "JPEG, PNG or WebP - max 10 MB - min 800 px",
     "eventSection": "Event",
     "title": "Title",
     "titlePlaceholder": "Event title",
@@ -154,7 +154,13 @@
     "templateDefault": "Default style",
     "templatePremium": "Premium",
     "templateLocked": "Upgrade to Premium to use this template.",
-    "templateLoading": "Loading templates..."
+    "templateLoading": "Loading templates...",
+    "posterInvalidType": "Unsupported format. Please use a JPEG, PNG or WebP file.",
+    "posterTooLarge": "This image is larger than 10 MB. Please choose a lighter file.",
+    "posterTooSmall": "This image is too small ({width} px wide). The minimum width is 800 px.",
+    "posterRights": "I confirm that I have the right to use this visual.",
+    "posterRightsHint": "Do not upload an image found online without permission.",
+    "posterRightsRequired": "Please confirm that you have the right to use this poster."
   },
   "publicPage": {
     "loading": "Loading the event...",
@@ -190,7 +196,18 @@
     "positionCenter": "Bottom center",
     "noPoster": "No poster has been uploaded for this event.",
     "draftWarning": "This event is not published yet: the QR code will only work after publishing.",
-    "alt": "Poster for {title}"
+    "alt": "Poster for {title}",
+    "editorTitle": "Position the QR code",
+    "editorHint": "Drag the QR code or use the buttons. The QR will be added to the final poster.",
+    "presetTopRight": "Top right",
+    "restoreRecommended": "Restore recommended position",
+    "dragQr": "Move the QR code (keyboard arrows)",
+    "resizeQr": "Resize the QR code",
+    "captionToggle": "Show the caption under the QR",
+    "dragHint": "Drag to move, pull the corner to enlarge.",
+    "overlapWarning": "This position may hide important text on your poster. Check the final result.",
+    "smallWarning": "The QR code is small: scan the final poster to make sure it remains readable.",
+    "readabilityWarning": "The QR code could not be detected on the poster. Try a larger size or a clearer position."
   },
   "errors": {
     "generic": "Something went wrong. Please try again.",

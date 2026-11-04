@@ -8,8 +8,8 @@ const DEFAULTS = {
 };
 
 const POSTER_DEFAULTS = {
-  maxWidth: 2000,
-  maxHeight: 2000,
+  maxWidth: 2400,
+  maxHeight: 2400,
   quality: 90,
 };
 

@@ -98,12 +98,12 @@
   },
   "editor": {
     "posterTitle": "Afiis bu evenman bi",
-    "posterHint": "Yebal sa afiis (afiis, flyer, wone). Ñu koy wone ni moo mel ci sa gan. Xeet yu ñu nangu : JPEG, PNG walla WebP (8 Mo lu ëpp).",
+    "posterHint": "Yebal sa afiis (afiis, flyer, wone). Sa kodu QR dina ñu koo boole ci kaw. Xeet yu ñu nangu : JPEG, PNG walla WebP (10 Mo lu ëpp, 800 px ci yaatuwaay).",
     "posterAlt": "Afiis",
     "posterReplace": "Soppil afiis bi",
     "posterRemove": "Dindi afiis bi",
     "posterImport": "Yebal sa afiis",
-    "posterFormats": "JPEG, PNG walla WebP - 8 Mo",
+    "posterFormats": "JPEG, PNG walla WebP - 10 Mo lu ëpp - 800 px ci suuf",
     "eventSection": "Evenman",
     "title": "Koj",
     "titlePlaceholder": "Koju evenman bi",
@@ -154,7 +154,13 @@
     "templateDefault": "Melo bi ñu gwàccokke",
     "templatePremium": "Premium",
     "templateLocked": "Yëgal Premium ngir jëfandikoo melo bii.",
-    "templateLoading": "Mu ngi yeb melo yi..."
+    "templateLoading": "Mu ngi yeb melo yi...",
+    "posterInvalidType": "Xeet bii ñu koo nanguwul. Jëfandikoo JPEG, PNG walla WebP.",
+    "posterTooLarge": "Nii ëpp na 10 Mo. Tannal benn xeet bu woyof.",
+    "posterTooSmall": "Nii ndaw na lool ({width} px ci yaatuwaay). Yaatuwaay bi ñu séer na 800 px.",
+    "posterRights": "Dama nangu ne am naa sañ-sañ ci jëfandikoo nii mel.",
+    "posterRightsHint": "Bul yebal nataal bu ñu gis ci internet bu amul sañ-sañ.",
+    "posterRightsRequired": "Waxal ne am naa sañ-sañ ci jëfandikoo afiis bii."
   },
   "publicPage": {
     "loading": "Evenman bi mu ngi ñów...",
@@ -190,7 +196,18 @@
     "positionCenter": "Suuf ci digg",
     "noPoster": "Amul afiis bu ñu yeb ci evenman bii.",
     "draftWarning": "Feeñuloo evenman bii : kodu QR bi dina dox rekk bu ñu koo feeñal.",
-    "alt": "Afiis bu {title}"
+    "alt": "Afiis bu {title}",
+    "editorTitle": "Tëral kodu QR bi",
+    "editorHint": "Tëjjal kodu QR bi walla jëfandikoo buton yi. Ñu dina koo boole ci afiis bi mujj.",
+    "presetTopRight": "Kaw ci ñeel",
+    "restoreRecommended": "Delloo bérab bi ñu digal",
+    "dragQr": "Tëjjal kodu QR bi (flèch klawye)",
+    "resizeQr": "Yaatal kodu QR bi",
+    "captionToggle": "Wone mbind mi ci suuf QR bi",
+    "dragHint": "Tëjjal ngir moo dox, tiital kogn bi ngir yaatal.",
+    "overlapWarning": "Bérab bii man naa nax mbind bu am solo ci sa afiis. Xoolal resultat bi.",
+    "smallWarning": "Kodu QR bi ndaw na : skan afiis bi mujj ngir xool ndax man naa jàng.",
+    "readabilityWarning": "Ñu manul a gis kodu QR bi ci afiis bi. Jéemal yaatal ko walla tëral ko fu leer."
   },
   "errors": {
     "generic": "Jafe-jafe am na. Jéemaat al.",

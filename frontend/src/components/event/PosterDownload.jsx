@@ -21,6 +21,7 @@ export default function PosterDownload({
   const { t } = useTranslation();
   const [position, setPosition] = useState('bottom-right');
   const { blob, url, loading, error, reload } = useComposedPoster(event, { position });
+  const serverComposed = Boolean(event?.poster?.composedUrl);
   const [busy, setBusy] = useState(false);
   const [qrBusy, setQrBusy] = useState(false);
 
@@ -28,7 +29,7 @@ export default function PosterDownload({
     if (!blob) return;
     setBusy(true);
     try {
-      downloadBlob(blob, posterFileName(event.slug));
+      downloadBlob(blob, posterFileName(event.slug, blob.type));
       toast.success(t('poster.downloaded'));
     } finally {
       setBusy(false);
@@ -39,7 +40,7 @@ export default function PosterDownload({
     if (!blob) return;
     const shared = await shareBlob(blob, posterFileName(event.slug), event.title);
     if (!shared) {
-      downloadBlob(blob, posterFileName(event.slug));
+      downloadBlob(blob, posterFileName(event.slug, blob.type));
       toast.success(t('poster.downloaded'));
     }
   };
@@ -83,7 +84,7 @@ export default function PosterDownload({
         )}
       </div>
 
-      {showPosition && (
+      {showPosition && !serverComposed && (
         <div className="mt-3">
           <label htmlFor="qr-position" className="label">
             {t('poster.positionLabel')}

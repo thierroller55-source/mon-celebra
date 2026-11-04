@@ -2,8 +2,10 @@ import { Router } from 'express';
 import { verifyToken } from '../middleware/auth.js';
 import { requireEventOwner } from '../middleware/ownership.js';
 import { validate } from '../middleware/validate.js';
+import { posterWriteLimiter } from '../middleware/rateLimiter.js';
 import { uploadMultiple, uploadPoster } from '../middleware/upload.js';
 import { createEventSchema, updateEventSchema } from '../validators/event.schema.js';
+import { posterImportSchema, posterSettingsSchema } from '../validators/poster.schema.js';
 import { guestbookModerationSchema } from '../validators/guestbook.schema.js';
 import { hostRsvpResponseSchema } from '../validators/rsvp.schema.js';
 import {
@@ -28,6 +30,10 @@ import {
   uploadMainImage,
   deleteMainImage,
   getEventPoster,
+  getComposedPoster,
+  uploadEventPoster,
+  updateEventPosterSettings,
+  deleteEventPoster,
 } from '../controllers/event.controller.js';
 import { getEventQr } from '../controllers/qrcode.controller.js';
 import { forbidPlanFieldsOnEvent } from '../middleware/planFieldsGuard.js';
@@ -52,6 +58,23 @@ router.delete('/:id/photos/:photoId', requireEventOwner, removePhoto);
 router.post('/:id/main-image', requireEventOwner, uploadPoster, uploadMainImage);
 router.delete('/:id/main-image', requireEventOwner, deleteMainImage);
 router.get('/:id/poster', requireEventOwner, getEventPoster);
+router.get('/:id/poster/composed', requireEventOwner, getComposedPoster);
+router.post(
+  '/:id/poster',
+  requireEventOwner,
+  posterWriteLimiter,
+  uploadPoster,
+  validate(posterImportSchema),
+  uploadEventPoster,
+);
+router.put(
+  '/:id/poster',
+  requireEventOwner,
+  posterWriteLimiter,
+  validate(posterSettingsSchema),
+  updateEventPosterSettings,
+);
+router.delete('/:id/poster', requireEventOwner, posterWriteLimiter, deleteEventPoster);
 
 router.get('/:id/rsvp', requireEventOwner, listRsvp);
 router.get('/:id/rsvp/export', requireEventOwner, exportRsvp);

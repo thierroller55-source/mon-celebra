@@ -17,9 +17,10 @@ export function publicEventUrl(slug) {
   return `${PUBLIC_BASE}/e/${slug}`;
 }
 
-/** Nom du fichier telecharge. */
-export function posterFileName(slug) {
-  return `affiche-${slug}.png`;
+/** Nom du fichier telecharge, aligne sur le format reel du blob. */
+export function posterFileName(slug, mimeType = 'image/png') {
+  const extension = mimeType === 'image/jpeg' ? 'jpg' : 'png';
+  return `affiche-${slug}.${extension}`;
 }
 
 function loadImage(source) {

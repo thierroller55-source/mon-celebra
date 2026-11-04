@@ -10,6 +10,7 @@ import { createUserClient } from './helpers/accounts.js';
 
 let server;
 let baseUrl;
+let admin;
 
 async function createEvent(api, overrides = {}) {
   const res = await api.post('/events', {
@@ -29,6 +30,16 @@ test.before(async () => {
     server = app.listen(0, resolve);
   });
   baseUrl = `http://127.0.0.1:${server.address().port}/api`;
+
+  admin = createApiClient(baseUrl);
+  const registered = await admin.post('/auth/register', {
+    firstName: 'Admin',
+    lastName: 'Host',
+    email: `admin-host-${Date.now()}@test.moncelebra.local`,
+    password: 'Str0ng!Pass',
+  });
+  assert.equal(registered.status, 201, JSON.stringify(registered.body));
+  admin.setToken(registered.body.data.accessToken);
 });
 
 test.after(async () => {
@@ -135,7 +146,10 @@ test('DELETE /:id/photos/:photoId : photo inexistante -> 404', async () => {
 });
 
 test('RSVP hote : liste, acceptation/refus et export CSV', async () => {
-  const { api: host } = await createUserClient(baseUrl);
+  const { api: host, user } = await createUserClient(baseUrl);
+  const upgraded = await admin.patch(`/admin/users/${user._id}/plan`, { plan: 'pro' });
+  assert.equal(upgraded.status, 200, JSON.stringify(upgraded.body));
+
   const event = await createEvent(host, { title: 'Fete RSVP' });
   await host.post(`/events/${event._id}/publish`);
 

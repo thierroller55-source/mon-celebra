@@ -12,6 +12,8 @@ import { getErrorMessage } from '../../services/api.js';
 import { useAuth } from '../../hooks/useAuth.js';
 import { parseGoogleMapsUrl, isShortMapsLink, isValidLatLng } from '../../lib/geo.js';
 import { LOCALES, LANGUAGE_NAMES } from '../../i18n/config.js';
+import { translatorFor } from '../../i18n/index.js';
+import PosterQrEditor from './PosterQrEditor.jsx';
 
 function toDateInput(value) {
   if (!value) return '';
@@ -83,7 +85,15 @@ export default function EventForm({
   const [details, setDetails] = useState(() => event?.details || {});
   const [files, setFiles] = useState([]);
   const [posterFile, setPosterFile] = useState(null);
-  const [posterPreview, setPosterPreview] = useState(() => event?.mainImage?.url || '');
+  const [posterPreview, setPosterPreview] = useState(
+    () => event?.poster?.sourceUrl || event?.mainImage?.url || '',
+  );
+  const [posterQr, setPosterQr] = useState(() => event?.poster?.qr || null);
+  const [posterCaption, setPosterCaption] = useState(() => t('poster.caption'));
+  const [rightsConfirmed, setRightsConfirmed] = useState(
+    () => Boolean(event?.poster?.sourceUrl),
+  );
+  const [posterError, setPosterError] = useState('');
   const [removePoster, setRemovePoster] = useState(false);
   const [geoBusy, setGeoBusy] = useState(false);
   const [linkValue, setLinkValue] = useState('');
@@ -98,7 +108,10 @@ export default function EventForm({
     setDetails(event?.details || {});
     setFiles([]);
     setPosterFile(null);
-    setPosterPreview(event?.mainImage?.url || '');
+    setPosterPreview(event?.poster?.sourceUrl || event?.mainImage?.url || '');
+    setPosterQr(event?.poster?.qr || null);
+    setRightsConfirmed(Boolean(event?.poster?.sourceUrl));
+    setPosterError('');
     setRemovePoster(false);
     setLinkValue('');
     setLocationNote('');
@@ -110,6 +123,18 @@ export default function EventForm({
     },
     [posterFile, posterPreview],
   );
+
+  useEffect(() => {
+    let active = true;
+    translatorFor(form.language)
+      .then((tr) => {
+        if (active) setPosterCaption(tr('poster.caption'));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [form.language]);
 
   useEffect(() => {
     if (!categorySlug) {
@@ -211,14 +236,44 @@ export default function EventForm({
 
   const handlePosterSelect = (file) => {
     if (!file) return;
+    const allowed = ['image/jpeg', 'image/png', 'image/webp'];
+    if (file.type && !allowed.includes(file.type)) {
+      setPosterError(t('editor.posterInvalidType'));
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setPosterError(t('editor.posterTooLarge'));
+      return;
+    }
+    setPosterError('');
     setPosterFile(file);
     setRemovePoster(false);
     setPosterPreview(URL.createObjectURL(file));
+    setPosterQr((current) => ({
+      ...(current || {}),
+      x: null,
+      y: null,
+      size: current?.size || 0.2,
+      position: current?.position || 'bottom-right',
+      captionVisible: current?.captionVisible !== false,
+    }));
+  };
+
+  const handlePosterMeta = ({ width }) => {
+    if (!posterFile) return;
+    if (width < 800) {
+      setPosterError(t('editor.posterTooSmall', { width }));
+      return;
+    }
+    setPosterError('');
   };
 
   const clearPoster = () => {
     setPosterFile(null);
     setPosterPreview('');
+    setPosterQr(null);
+    setRightsConfirmed(false);
+    setPosterError('');
     setRemovePoster(true);
   };
 
@@ -269,7 +324,18 @@ export default function EventForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(buildPayload(), { files, publishNow: form.publishNow, posterFile, removePoster });
+    if (posterFile && !rightsConfirmed) {
+      setPosterError(t('editor.posterRightsRequired'));
+      return;
+    }
+    onSubmit(buildPayload(), {
+      files,
+      publishNow: form.publishNow,
+      posterFile,
+      removePoster,
+      posterQr,
+      rightsConfirmed,
+    });
   };
 
   if (!category) return null;
@@ -296,28 +362,43 @@ export default function EventForm({
         />
 
         {posterPreview ? (
-          <div className="relative overflow-hidden rounded-xl border border-celebra-dark/15">
-            <img
-              src={posterPreview}
-              alt={t('editor.posterAlt')}
-              className="max-h-96 w-full object-contain"
-            />
-            <div className="absolute right-2 top-2 flex gap-2">
-              <label
-                htmlFor="poster"
-                className="cursor-pointer rounded-lg bg-white/90 p-1.5 text-celebra-night shadow hover:bg-white"
-                aria-label={t('editor.posterReplace')}
-              >
-                <ImagePlus size={16} />
-              </label>
-              <button
-                type="button"
-                className="rounded-lg bg-white/90 p-1.5 text-red-600 shadow hover:bg-white"
-                onClick={clearPoster}
-                aria-label={t('editor.posterRemove')}
-              >
-                <X size={16} />
-              </button>
+          <div className="space-y-4">
+            <div className="relative overflow-hidden rounded-xl border border-celebra-dark/15">
+              <img
+                src={posterPreview}
+                alt={t('editor.posterAlt')}
+                className="max-h-96 w-full object-contain"
+              />
+              <div className="absolute right-2 top-2 flex gap-2">
+                <label
+                  htmlFor="poster"
+                  className="cursor-pointer rounded-lg bg-white/90 p-1.5 text-celebra-night shadow hover:bg-white"
+                  aria-label={t('editor.posterReplace')}
+                >
+                  <ImagePlus size={16} />
+                </label>
+                <button
+                  type="button"
+                  className="rounded-lg bg-white/90 p-1.5 text-red-600 shadow hover:bg-white"
+                  onClick={clearPoster}
+                  aria-label={t('editor.posterRemove')}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-sm font-semibold">{t('poster.editorTitle')}</h3>
+              <p className="mb-3 text-xs text-celebra-dark/55">{t('poster.editorHint')}</p>
+              <PosterQrEditor
+                src={posterPreview}
+                qr={posterQr}
+                caption={posterCaption}
+                onChange={setPosterQr}
+                onImageMeta={handlePosterMeta}
+                t={t}
+              />
             </div>
           </div>
         ) : (
@@ -329,6 +410,30 @@ export default function EventForm({
             <span className="font-medium text-celebra-dark">{t('editor.posterImport')}</span>
             <span>{t('editor.posterFormats')}</span>
           </label>
+        )}
+
+        {posterFile && (
+          <div className="space-y-1">
+            <label className="flex items-start gap-2 text-sm">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={rightsConfirmed}
+                onChange={(event) => {
+                  setRightsConfirmed(event.target.checked);
+                  if (event.target.checked) setPosterError('');
+                }}
+              />
+              <span>{t('editor.posterRights')}</span>
+            </label>
+            <p className="pl-6 text-xs text-celebra-dark/50">{t('editor.posterRightsHint')}</p>
+          </div>
+        )}
+
+        {posterError && (
+          <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+            {posterError}
+          </p>
         )}
       </section>
 

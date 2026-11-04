@@ -6,6 +6,7 @@ import {
   LANGUAGES,
 } from '../config/constants.js';
 import { EVENT_PLANS, EVENT_PLAN_IDS } from '../config/plans.js';
+import { POSTER_MODES, QR_POSITIONS } from '../config/poster.js';
 import {
   imageSchema,
   locationSchema,
@@ -60,6 +61,35 @@ const statsSchema = new mongoose.Schema(
   { _id: false },
 );
 
+const posterQrSchema = new mongoose.Schema(
+  {
+    x: { type: Number, min: 0, max: 1, default: null },
+    y: { type: Number, min: 0, max: 1, default: null },
+    size: { type: Number, min: 0.15, max: 1, default: 0.2 },
+    position: { type: String, enum: QR_POSITIONS, default: 'bottom-right' },
+    captionVisible: { type: Boolean, default: true },
+  },
+  { _id: false },
+);
+
+const posterSchema = new mongoose.Schema(
+  {
+    mode: { type: String, enum: POSTER_MODES, default: 'upload' },
+    sourceUrl: { type: String, default: null },
+    sourcePublicId: { type: String, default: null },
+    composedUrl: { type: String, default: null },
+    composedPublicId: { type: String, default: null },
+    qr: { type: posterQrSchema, default: () => ({}) },
+    templateId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Template',
+      default: null,
+    },
+    updatedAt: { type: Date, default: null },
+  },
+  { _id: false },
+);
+
 const eventSchema = new mongoose.Schema(
   {
     ownerId: {
@@ -95,6 +125,7 @@ const eventSchema = new mongoose.Schema(
     locations: { type: [locationSchema], default: [] },
 
     mainImage: { type: imageSchema, default: undefined },
+    poster: { type: posterSchema, default: undefined },
     gallery: { type: [galleryItemSchema], default: [] },
 
     templateId: {

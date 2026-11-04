@@ -1,7 +1,14 @@
 import { ApiError } from '../utils/ApiError.js';
 
 const FORBIDDEN_USER_FIELDS = new Set(['plan', 'proUntil', 'premiumUntil', 'role', 'isActive']);
-const FORBIDDEN_EVENT_FIELDS = new Set(['plan', 'premiumUntil', 'ownerId', 'status', 'slug']);
+const FORBIDDEN_EVENT_FIELDS = new Set([
+  'plan',
+  'premiumUntil',
+  'ownerId',
+  'status',
+  'slug',
+  'poster',
+]);
 
 export function forbidPlanFieldsOnMe(req, res, next) {
   if (!req.body || typeof req.body !== 'object') return next();

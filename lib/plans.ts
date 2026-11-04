@@ -46,6 +46,7 @@ export const PLAN_CATALOG = Object.freeze({
       maxActiveEvents: 1,
       maxPhotosPerEvent: 5,
       maxGuestbookMessages: 10,
+      maxPosterFileMb: 10,
     }),
     features: Object.freeze({
       premiumTemplates: false,
@@ -74,6 +75,7 @@ export const PLAN_CATALOG = Object.freeze({
       maxActiveEventsPerPass: 1,
       maxPhotosPerEvent: 20,
       maxGuestbookMessages: null,
+      maxPosterFileMb: 10,
     }),
     features: Object.freeze({
       premiumTemplates: true,
@@ -101,6 +103,7 @@ export const PLAN_CATALOG = Object.freeze({
       maxActiveEvents: 50,
       maxPhotosPerEvent: 20,
       maxGuestbookMessages: null,
+      maxPosterFileMb: 10,
     }),
     features: Object.freeze({
       premiumTemplates: true,
@@ -128,6 +131,7 @@ export const PLAN_CATALOG = Object.freeze({
       maxActiveEvents: null,
       maxPhotosPerEvent: 20,
       maxGuestbookMessages: null,
+      maxPosterFileMb: 10,
     }),
     features: Object.freeze({
       premiumTemplates: true,

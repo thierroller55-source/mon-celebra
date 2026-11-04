@@ -22,9 +22,10 @@ export function useComposedPoster(event, { position = 'bottom-right' } = {}) {
   const slug = event?.slug;
   const eventLanguage = event?.language || 'fr';
   const hasPoster = Boolean(event?.mainImage?.url);
+  const hasComposed = Boolean(event?.poster?.composedUrl);
 
   const generate = useCallback(async () => {
-    if (!eventId || !hasPoster) {
+    if (!eventId || (!hasPoster && !hasComposed)) {
       setError(i18n.t('poster.noPoster'));
       return;
     }
@@ -32,14 +33,19 @@ export function useComposedPoster(event, { position = 'bottom-right' } = {}) {
     setLoading(true);
     setError('');
     try {
-      const posterBlob = await eventService.fetchPosterBlob(eventId);
-      const caption = (await translatorFor(eventLanguage))('poster.caption');
-      const composed = await composePosterWithQr({
-        posterUrl: posterBlob,
-        qrUrl: publicEventUrl(slug),
-        position,
-        caption,
-      });
+      let composed;
+      if (hasComposed) {
+        composed = await eventService.fetchComposedPosterBlob(eventId);
+      } else {
+        const posterBlob = await eventService.fetchPosterBlob(eventId);
+        const caption = (await translatorFor(eventLanguage))('poster.caption');
+        composed = await composePosterWithQr({
+          posterUrl: posterBlob,
+          qrUrl: publicEventUrl(slug),
+          position,
+          caption,
+        });
+      }
       if (urlRef.current) URL.revokeObjectURL(urlRef.current);
       urlRef.current = URL.createObjectURL(composed);
       setBlob(composed);
@@ -49,7 +55,7 @@ export function useComposedPoster(event, { position = 'bottom-right' } = {}) {
     } finally {
       setLoading(false);
     }
-  }, [eventId, hasPoster, slug, position, eventLanguage]);
+  }, [eventId, hasPoster, hasComposed, slug, position, eventLanguage]);
 
   useEffect(() => {
     let active = true;

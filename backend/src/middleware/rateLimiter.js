@@ -37,3 +37,10 @@ export const publicWriteLimiter = makeLimiter({
   max: 20,
   message: 'Trop de requetes. Veuillez patienter avant de reessayer.',
 });
+
+/** Limiteur pour les imports/regenerations d'affiche (traitement image lourd). */
+export const posterWriteLimiter = makeLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 30,
+  message: "Trop de modifications d'affiche. Veuillez patienter avant de reessayer.",
+});

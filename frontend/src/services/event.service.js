@@ -26,6 +26,19 @@ export const eventService = {
     api.delete(`/events/${id}/main-image`).then((r) => r.data.data.event),
   fetchPosterBlob: (id) =>
     api.get(`/events/${id}/poster`, { responseType: 'blob' }).then((r) => r.data),
+  fetchComposedPosterBlob: (id) =>
+    api.get(`/events/${id}/poster/composed`, { responseType: 'blob' }).then((r) => r.data),
+  uploadEventPoster: (id, file, { rightsConfirmed = true, qr = null } = {}) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    formData.append('rightsConfirmed', rightsConfirmed ? 'true' : 'false');
+    if (qr) formData.append('qr', JSON.stringify(qr));
+    return api.post(`/events/${id}/poster`, formData).then((r) => r.data.data);
+  },
+  updatePosterSettings: (id, payload) =>
+    api.put(`/events/${id}/poster`, payload).then((r) => r.data.data),
+  removeEventPoster: (id) =>
+    api.delete(`/events/${id}/poster`).then((r) => r.data.data.event),
   fetchQrBlobUrl: (id) =>
     api
       .get(`/events/${id}/qrcode`, { responseType: 'blob' })
