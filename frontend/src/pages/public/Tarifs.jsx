@@ -2,7 +2,6 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { PLAN_CATALOG, PUBLIC_PLAN_IDS } from '../../lib/plans.js';
 import PlanCard from '../../components/plans/PlanCard.jsx';
-import { useLocale } from '../../context/LocaleContext.jsx';
 import UpgradeDialog from '../../components/plans/UpgradeDialog.jsx';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,11 +14,9 @@ const FAQ = [
 ];
 
 export default function Tarifs() {
-  const { locale } = useLocale();
   const navigate = useNavigate();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const [upgradePlan, setUpgradePlan] = useState('event_pass');
-  const [lang] = useState(locale || 'fr');
 
   const plans = useMemo(() => PUBLIC_PLAN_IDS.map((id) => PLAN_CATALOG[id]).filter(Boolean), []);
 

@@ -60,8 +60,8 @@ export default function UpgradeDialog({ open, onClose, planRequested = 'event_pa
             <input className="input" placeholder="Numéro de paiement" value={form.payerPhone} onChange={(e)=>setForm({...form,payerPhone:e.target.value})} required />
             <input className="input" placeholder="Référence de transaction" value={form.transactionRef} onChange={(e)=>setForm({...form,transactionRef:e.target.value})} required />
             <input className="input" placeholder="Montant (FCFA)" value={form.amount} onChange={(e)=>setForm({...form,amount:e.target.value})} />
-            <button className="btn-primary w-full" disabled={loading}>{loading ? 'Envoi...' : "J'ai payé"}</button>
-            <p className="text-xs text-celebra-dark/60">Aucun message ne promet un délai d'activation ; après vérification du paiement.</p>
+            <button className="btn-primary w-full" disabled={loading}>{loading ? 'Envoi...' : "J&apos;ai payé"}</button>
+            <p className="text-xs text-celebra-dark/60">Aucun message ne promet un délai d&apos;activation ; après vérification du paiement.</p>
           </form>
         ) : (
           <button className="btn-outline w-full" onClick={onClose}>Fermer</button>

@@ -7,7 +7,7 @@ import PasswordField from '../../components/auth/PasswordField.jsx';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Login() {
-  const { login } = useAuth();
+  const { login, guest } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get('redirect');

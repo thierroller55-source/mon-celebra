@@ -3,11 +3,9 @@ import { CheckCircle2, XCircle, Ban, Search, Loader2 } from 'lucide-react';
 import { adminService } from '../../services/admin.service.js';
 import { getErrorMessage } from '../../services/api.js';
 import { useToast } from '../../context/ToastContext.jsx';
-import { useAuth } from '../../hooks/useAuth.js';
 
 export default function AdminPlans() {
   const toast = useToast();
-  const { user: current } = useAuth();
   const [requests, setRequests] = useState([]);
   const [status, setStatus] = useState('pending');
   const [planRequested, setPlanRequested] = useState('');
@@ -15,7 +13,6 @@ export default function AdminPlans() {
   const [busyId, setBusyId] = useState(null);
   const [activateForm, setActivateForm] = useState({ userId: '', planRequested: 'pro', durationMonths: 12, note: '' });
   const [deactivateForm, setDeactivateForm] = useState({ userId: '', eventId: '', note: '' });
-  const [searchUserId, setSearchUserId] = useState('');
   const [audits, setAudits] = useState([]);
 
   const load = useCallback(async () => {
@@ -155,7 +152,7 @@ export default function AdminPlans() {
       </div>
 
       <div className="card p-4">
-        <h2 className="font-semibold mb-3">Journal d'audit</h2>
+        <h2 className="font-semibold mb-3">Journal d&apos;audit</h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-celebra-dark/10 text-xs uppercase text-celebra-dark/50">

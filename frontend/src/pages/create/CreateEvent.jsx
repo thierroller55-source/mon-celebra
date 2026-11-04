@@ -46,7 +46,9 @@ export default function CreateEvent({ categorySlug: categorySlugProp }) {
     if (!user) {
       try {
         await guest();
-      } catch {}
+      } catch {
+        /* session invite impossible : la soumission echouera avec un message clair */
+      }
     }
     setError('');
     setFieldErrors({});
