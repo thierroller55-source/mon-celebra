@@ -1,13 +1,12 @@
-import { useState } from 'react';
-import { Calendar, MapPin, Clock, Navigation, Copy, Check } from 'lucide-react';
+import { Calendar, MapPin, Clock } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import Countdown from '../components/event/Countdown.jsx';
 import RsvpSection from '../components/event/RsvpSection.jsx';
 import GuestbookSection from '../components/event/GuestbookSection.jsx';
 import ReportButton from '../components/event/ReportButton.jsx';
 import MapView from '../components/map/MapView.jsx';
+import DirectionsButton from '../components/map/DirectionsButton.jsx';
 import DetailsRenderer from './DetailsRenderer.jsx';
-import { googleMapsDirUrl, googleMapsSearchUrl, wazeUrl } from '../lib/geo.js';
 import { formatDate } from '../lib/date.js';
 import { useLocale } from '../context/LocaleContext.jsx';
 
@@ -58,33 +57,6 @@ const VARIANTS = {
     background: false,
   },
 };
-
-function locationMapsUrl(location, mode = 'search') {
-  return mode === 'dir'
-    ? googleMapsDirUrl(location.latitude, location.longitude)
-    : googleMapsSearchUrl(location.latitude, location.longitude);
-}
-
-function CopyAddressButton({ location }) {
-  const { t } = useTranslation();
-  const [copied, setCopied] = useState(false);
-  const text = location.address || `${location.name || location.label || ''} (${location.latitude}, ${location.longitude})`;
-  const handleCopy = async () => {
-    try {
-      await navigator.clipboard?.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* presse-papier indisponible */
-    }
-  };
-  return (
-    <button type="button" className="btn-outline w-full" onClick={handleCopy}>
-      {copied ? <Check size={16} /> : <Copy size={16} />}
-      {copied ? t('publicPage.addressCopied') : t('publicPage.copyAddress')}
-    </button>
-  );
-}
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -230,29 +202,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
                         label={loc.name || loc.label}
                         className="h-48"
                       />
-                      <div className="mt-1 grid grid-cols-2 gap-2">
-                        <a
-                          href={locationMapsUrl(loc, 'dir')}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-outline w-full"
-                        >
-                          <Navigation size={16} />
-                          {t('publicPage.itinerary')}
-                        </a>
-                        <a
-                          href={wazeUrl(loc.latitude, loc.longitude)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-outline w-full"
-                        >
-                          <Navigation size={16} />
-                          Waze
-                        </a>
-                        <div className="col-span-2">
-                          <CopyAddressButton location={loc} />
-                        </div>
-                      </div>
+                      <DirectionsButton location={loc} className="mt-1" />
                     </>
                   )}
                 </div>

@@ -167,6 +167,7 @@
     "location": "Location",
     "itinerary": "Directions",
     "waze": "Waze",
+    "appleMaps": "Apple Maps",
     "copyAddress": "Copy address",
     "addressCopied": "Address copied",
     "gallery": "Gallery",

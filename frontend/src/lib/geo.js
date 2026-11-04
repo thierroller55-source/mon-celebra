@@ -72,6 +72,10 @@ export function wazeUrl(lat, lng) {
   return `https://waze.com/ul?ll=${lat}%2C${lng}&navigate=yes`;
 }
 
+export function appleMapsUrl(lat, lng) {
+  return `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
+}
+
 export const DEFAULT_CENTER = [14.7167, -17.4677]; // Dakar
 export const DEFAULT_ZOOM = 13;
 export const POINT_ZOOM = 16;
