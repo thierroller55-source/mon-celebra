@@ -81,7 +81,7 @@ export default function EventTemplate({ event, category = null, variant = 'class
   const secondary = design.secondaryColor || '#1F2937';
   const headline = design.customTexts?.headline || event.title;
   const locations = [event.location, ...(event.locations || [])].filter(
-    (loc) => loc && (loc.name || loc.address),
+    (loc) => loc && (loc.label || loc.name || loc.address),
   );
   const detailsFields = category?.fieldsSchema?.fields || [];
 
@@ -195,16 +195,14 @@ export default function EventTemplate({ event, category = null, variant = 'class
                   )}
                   {loc.address && <p className="text-sm text-celebra-dark/70">{loc.address}</p>}
                   {loc.latitude != null && loc.longitude != null && (
-                    <>
-                      <MapView
-                        latitude={loc.latitude}
-                        longitude={loc.longitude}
-                        label={loc.name || loc.label}
-                        className="h-48"
-                      />
-                      <DirectionsButton location={loc} className="mt-1" />
-                    </>
+                    <MapView
+                      latitude={loc.latitude}
+                      longitude={loc.longitude}
+                      label={loc.name || loc.label}
+                      className="h-48"
+                    />
                   )}
+                  <DirectionsButton location={loc} className="mt-1" />
                 </div>
               ))}
             </div>

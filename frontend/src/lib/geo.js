@@ -76,6 +76,19 @@ export function appleMapsUrl(lat, lng) {
   return `https://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
 }
 
+/** Liens d'itineraire a partir d'une adresse textuelle (sans coordonnees). */
+export function googleMapsDirQueryUrl(query) {
+  return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(query)}`;
+}
+
+export function wazeQueryUrl(query) {
+  return `https://waze.com/ul?q=${encodeURIComponent(query)}&navigate=yes`;
+}
+
+export function appleMapsQueryUrl(query) {
+  return `https://maps.apple.com/?q=${encodeURIComponent(query)}&dirflg=d`;
+}
+
 export const DEFAULT_CENTER = [14.7167, -17.4677]; // Dakar
 export const DEFAULT_ZOOM = 13;
 export const POINT_ZOOM = 16;

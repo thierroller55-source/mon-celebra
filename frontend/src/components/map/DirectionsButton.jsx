@@ -2,9 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown, Copy, Navigation } from 'lucide-react';
 import {
+  appleMapsQueryUrl,
   appleMapsUrl,
+  googleMapsDirQueryUrl,
   googleMapsDirUrl,
   hasGeo,
+  wazeQueryUrl,
   wazeUrl,
 } from '../../lib/geo.js';
 
@@ -20,6 +23,11 @@ export default function DirectionsButton({ location, className = '' }) {
   const containerRef = useRef(null);
 
   const { latitude, longitude } = location || {};
+  const positioned = hasGeo(latitude, longitude);
+  const address = [location?.address, location?.name, location?.label]
+    .map((value) => String(value || '').trim())
+    .find(Boolean);
+  const destination = positioned ? `${latitude},${longitude}` : address;
 
   useEffect(() => {
     if (!open) return;
@@ -37,15 +45,13 @@ export default function DirectionsButton({ location, className = '' }) {
     };
   }, [open]);
 
-  if (!location || !hasGeo(latitude, longitude)) return null;
+  if (!location || !destination) return null;
 
-  const address =
-    location.address ||
-    `${location.name || location.label || ''} (${latitude}, ${longitude})`;
+  const copyText = address || destination;
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard?.writeText(address);
+      await navigator.clipboard?.writeText(copyText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -57,17 +63,19 @@ export default function DirectionsButton({ location, className = '' }) {
     {
       key: 'googleMaps',
       label: 'Google Maps',
-      href: googleMapsDirUrl(latitude, longitude),
+      href: positioned
+        ? googleMapsDirUrl(latitude, longitude)
+        : googleMapsDirQueryUrl(destination),
     },
     {
       key: 'waze',
       label: t('publicPage.waze'),
-      href: wazeUrl(latitude, longitude),
+      href: positioned ? wazeUrl(latitude, longitude) : wazeQueryUrl(destination),
     },
     {
       key: 'appleMaps',
       label: t('publicPage.appleMaps'),
-      href: appleMapsUrl(latitude, longitude),
+      href: positioned ? appleMapsUrl(latitude, longitude) : appleMapsQueryUrl(destination),
     },
   ];
 
